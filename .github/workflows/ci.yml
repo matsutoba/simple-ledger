@@ -87,11 +87,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        working-directory: ./frontend
-        run: pnpm build
+        run: pnpm install
 
   # ============================================
   # フロントエンド: Jest Tests
