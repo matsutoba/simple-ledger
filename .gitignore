@@ -2,15 +2,17 @@
 
 # dependencies
 /node_modules
-/.pnp
-.pnp.js
+/frontend/node_modules
+
+# pnpm
+pnpm-lock.yaml
 
 # testing
 /coverage
 
 # next.js
 /.next/
-/out/
+/frontend/.next/
 
 # production
 /build
@@ -23,14 +25,42 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
 # local env files
 .env*.local
 .env
 
-# vercel
-.vercel
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Go
+/backend/tmp/
+/backend/dist/
+
+# Go binary and executable files
+*.exe
+*.exe~
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Go test outputs
+*.test
+*.out
+coverage.txt
+*.coverprofile
+
+# Go dependencies
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+*~
