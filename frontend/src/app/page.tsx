@@ -26,7 +26,7 @@ export default function Home() {
               バックエンド
             </h2>
             <p className="text-gray-600">
-              Go (Golang) 1.21 REST API
+              Go (Golang) 1.23 REST API
             </p>
           </div>
 

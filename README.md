@@ -5,7 +5,7 @@
 ## 技術スタック
 
 - **Frontend**: Next.js 15 (TypeScript, Tailwind CSS)
-- **Backend**: Go (Golang) 1.21
+- **Backend**: Go (Golang) 1.23
 - **Database**: MySQL 8.0
 - **コンテナ**: Docker & Docker Compose
 
