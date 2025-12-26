@@ -96,6 +96,9 @@ simple-ledger/
 - **パッケージマネージャー**: pnpm を使用
 - **テスト**: Jest で実行（`pnpm test`, `pnpm test:watch`, `pnpm test:coverage`）
 - **ロックファイル**: `pnpm-lock.yaml` をコミット（依存関係の再現性確保）
+- **Lint 設定**: [frontend/eslint.config.mjs](../frontend/eslint.config.mjs) を参照
+  - ESLint 9 + Next.js Core Web Vitals + TypeScript 対応
+  - jest.config.js, jest.setup.js は除外
 
 ### バックエンド (Go)
 
@@ -103,9 +106,12 @@ simple-ledger/
 - **パッケージ管理**: go mod
 - **コード整形**: goimports（保存時自動）
 - **Linter**: golangci-lint（errcheck でエラーハンドリング検査）
+  - エラーの戻り値を常にチェック（`if err != nil { ... }` 必須）
+  - 未使用の変数・インポートを検査
 - **フレームワーク**: Gin REST API
 - **ORM**: GORM (MySQL/PostgreSQL/SQLite 対応)
 - **テスト**: go test で実行（`go test -v -race -coverprofile=coverage.out ./...`）
+- **Auto Format**: [backend/.air.toml](../backend/.air.toml) で goimports 自動実行
 
 ---
 
@@ -137,7 +143,54 @@ GitHub Actions で自動的に以下を実行：
 
 ---
 
-## 💡 コード分析時のポイント
+## �️ コード生成時のガイドライン
+
+### フロントエンド
+
+1. **ESLint ルール準拠**
+
+   - 設定ファイル: [eslint.config.mjs](../frontend/eslint.config.mjs)
+   - `const` 推奨、`let` は必要な場合のみ
+   - 未使用変数を避ける
+   - React Hooks の依存関係を正しく指定
+
+2. **TypeScript 型定義**
+
+   - 全ての関数に戻り値の型を指定
+   - `any` は使わない（代わりに `unknown` を検討）
+   - React コンポーネントは Props の型定義を明記
+
+3. **テスト対応**
+   - テストはすぐに実行できるようにコード生成
+   - `jest.config.js` の設定に従う
+
+### バックエンド
+
+1. **エラーハンドリング（必須）**
+
+   - 設定ファイル: [.air.toml](../backend/.air.toml)
+   - すべての関数呼び出しのエラーをチェック
+   - golangci-lint の `errcheck` ルールを遵守
+   - 例: `if err != nil { return err }` を忘れずに
+
+2. **命名規則**
+
+   - エクスポート関数: PascalCase
+   - プライベート関数: camelCase
+   - 定数: UPPER_SNAKE_CASE
+
+3. **goimports 対応**
+
+   - インポートは自動フォーマットで整理（`.air.toml` で実行）
+   - 不要なインポートは記述しない
+
+4. **テスト**
+   - ユニットテストは `_test.go` ファイルに記述
+   - `go test -v -race` で実行可能な状態を保つ
+
+---
+
+## �💡 コード分析時のポイント
 
 1. **フロントエンド分析**:
 
