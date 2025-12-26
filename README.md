@@ -129,6 +129,43 @@ docker-compose down
 
 詳細は `.vscode/settings.json` を参照
 
+## CI/CD
+
+### GitHub Actions
+
+自動的に以下が実行されます：
+
+**フロントエンド:**
+
+- ✅ ESLint チェック
+- ✅ Next.js ビルド確認
+- ✅ Jest テスト実行
+
+**バックエンド:**
+
+- ✅ go vet チェック
+- ✅ golangci-lint チェック
+- ✅ go test 実行
+
+実行タイミング:
+
+- `main` / `develop` ブランチへの push
+- Pull Request 作成時
+
+### ブランチ保護ルール（推奨）
+
+`main` ブランチへのマージ前に CI を成功させることを強制：
+
+GitHub Settings → Branches → Add rule:
+
+1. Branch name pattern: `main`
+2. ✅ Require status checks to pass before merging
+3. 以下のチェックを選択:
+   - `Frontend - ESLint`
+   - `Frontend - Build`
+   - `Frontend - Jest Tests`
+   - `Backend - Lint & Test`
+
 ## ディレクトリ構成
 
 ```
