@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: ledger-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: ledger
+      MYSQL_USER: ledger_user
+      MYSQL_PASSWORD: ledger_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-ppassword",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ledger-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ledger-backend
+    restart: always
+    environment:
+      DB_USER: root
+      DB_PASSWORD: password
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ledger
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - ledger-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ledger-frontend
+    restart: always
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - ledger-network
+
+volumes:
+  mysql_data:
+
+networks:
+  ledger-network:
+    driver: bridge
