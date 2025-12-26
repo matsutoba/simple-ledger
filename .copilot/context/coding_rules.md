@@ -16,8 +16,8 @@
 - **パッケージマネージャー**: pnpm
 - **スタイリング**: Tailwind CSS 4
 - **リンター**: ESLint 9
+- **テストフレームワーク**: Jest 29
 - **ビルドツール**: Turbopack
-- **セットアップ**: `pnpm install` / `pnpm dev` / `pnpm build`
 
 ### バックエンド (`backend/`)
 
@@ -27,14 +27,13 @@
 - **データベースドライバー**: MySQL, PostgreSQL, SQLite
 - **ホットリロード**: Air
 - **コード整形**: goimports
-- **セットアップ**: `go mod download` / `air`
 
 ### インフラストラクチャ
 
 - **コンテナ**: Docker
 - **オーケストレーション**: Docker Compose 3.8
 - **データベース**: MySQL 8.0
-- **バージョン管理**: proto (Go 1.25.4, Node.js 25.0.0)
+- **バージョン管理**: proto
 
 ---
 
@@ -42,10 +41,14 @@
 
 ```
 simple-ledger/
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # GitHub Actions CI/CD設定
 ├── frontend/                    # Next.js フロントエンド
 │   ├── app/                     # App Router (pages)
 │   ├── public/                  # 静的ファイル
 │   ├── eslint.config.mjs        # ESLint設定
+│   ├── jest.config.js           # Jest設定
 │   ├── next.config.ts           # Next.js設定
 │   ├── tsconfig.json            # TypeScript設定
 │   ├── postcss.config.mjs       # PostCSS設定
@@ -68,45 +71,17 @@ simple-ledger/
 
 ---
 
-## 🔧 開発環境セットアップ
+## 🔧 セットアップ
 
-### 1. 前提条件
+詳細な手順は [README.md のセットアップ手順](../README.md#セットアップ手順) を参照してください。
 
-- proto インストール
-- Docker インストール
-- Node.js / Go は proto で自動管理
+主なコマンド：
 
-### 2. バージョン設定
-
-```bash
-proto install
-```
-
-### 3. 依存関係インストール
-
-```bash
-# フロントエンド
-cd frontend && pnpm install && cd ..
-
-# バックエンド
-cd backend && go mod download && cd ..
-```
-
-### 4. ローカル開発実行
-
-```bash
-# フロントエンド（別ターミナル）
-cd frontend && pnpm dev
-
-# バックエンド（別ターミナル）
-cd backend && air
-```
-
-### 5. Docker での実行
-
-```bash
-docker-compose up --build -d
-```
+- `proto install` - バージョン設定
+- `pnpm install` - フロントエンド依存関係
+- `go mod download` - バックエンド依存関係
+- `pnpm dev` / `air` - ローカル開発実行
+- `docker-compose up --build -d` - Docker での実行
 
 ---
 
@@ -119,48 +94,64 @@ docker-compose up --build -d
 - **ファイル命名**: kebab-case (`.tsx`, `.ts`)
 - **フォーマット**: ESLint で自動整形（保存時）
 - **パッケージマネージャー**: pnpm を使用
+- **テスト**: Jest で実行（`pnpm test`, `pnpm test:watch`, `pnpm test:coverage`）
+- **ロックファイル**: `pnpm-lock.yaml` をコミット（依存関係の再現性確保）
 
 ### バックエンド (Go)
 
 - **言語**: Go 1.25.4
 - **パッケージ管理**: go mod
 - **コード整形**: goimports（保存時自動）
+- **Linter**: golangci-lint（errcheck でエラーハンドリング検査）
 - **フレームワーク**: Gin REST API
 - **ORM**: GORM (MySQL/PostgreSQL/SQLite 対応)
+- **テスト**: go test で実行（`go test -v -race -coverprofile=coverage.out ./...`）
 
 ---
 
-## 🔌 API エンドポイント
+## 🚀 CI/CD
 
-バックエンド: `http://localhost:8080`
-フロントエンド開発: `http://localhost:3000`
-フロントエンド本番（Docker）: `http://localhost:80`
+GitHub Actions で自動的に以下を実行：
+
+**フロントエンド:**
+
+- ESLint チェック
+- Next.js ビルド確認
+- Jest テスト実行
+
+**バックエンド:**
+
+- go vet チェック
+- golangci-lint チェック
+- go test 実行
+
+詳細は [README.md の CI/CD セクション](../README.md#cicd) を参照してください。
 
 ---
 
-## 📦 主要な依存関係
+## 🔗 その他の情報
 
-### フロントエンド (`package.json`)
-
-- next@16.1.1
-- react@19.2.3
-- react-dom@19.2.3
-- tailwindcss@4
-- @tailwindcss/postcss@4
-- typescript@5
-- eslint@9
-
-### バックエンド (`go.mod`)
-
-- gin-gonic/gin@1.11.0
-- gorm.io/gorm@1.31.1
-- gorm.io/driver/\* (mysql, postgres, sqlite)
+- **開発手順**: [README.md の開発セクション](../README.md#開発)
+- **Docker コマンド**: [README.md の Docker コマンド](../README.md#docker-コマンド)
+- **トラブルシューティング**: [README.md](../README.md#トラブルシューティング)
 
 ---
 
 ## 💡 コード分析時のポイント
 
-1. **フロントエンド分析**: App Router (pages in `app/`) を確認、TypeScript の型定義を優先
-2. **バックエンド分析**: Gin ルータ, GORM モデルを確認、複数 DB 対応を考慮
-3. **共通**: Docker 環境での実行を念頭に、環境変数の設定を確認
-4. **パッケージ管理**: フロントは pnpm、バックエンドは go mod を使用
+1. **フロントエンド分析**:
+
+   - App Router（`app/` ディレクトリ内）を確認
+   - TypeScript の型定義を優先
+   - pnpm-lock.yaml は version control に含まれている
+
+2. **バックエンド分析**:
+
+   - Gin ルータの設定を確認
+   - GORM モデルと複数 DB 対応を考慮
+   - エラーハンドリングを確認（golangci-lint による検査）
+
+3. **共通**:
+   - Docker 環境での実行を念頭に、環境変数の設定を確認
+   - フロントは pnpm、バックエンドは go mod を使用
+   - 依存関係の再現性（ロックファイル）を重視
