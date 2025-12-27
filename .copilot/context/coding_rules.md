@@ -190,13 +190,62 @@ GitHub Actions で自動的に以下を実行：
    - 例: `json:"createdAt"`, `json:"lastLoginAt"`, `json:"isActive"`
    - 隠す必要があるフィールドは `json:"-"` を使用
 
-5. **テスト**
+5. **CRUD 実装パターン（User モデルに従う）**
+
+   - **ディレクトリ構造**: `internal/{entity}/`
+
+     - `controller/` - HTTP ハンドラ
+     - `service/` - ビジネスロジック
+     - `repository/` - DB 操作（GORM）
+     - `dto/` - リクエスト/レスポンス DTO
+     - `router/` - エンドポイント定義
+
+   - **モデル定義** (`internal/models/`)
+
+     - GORM タグで型とバリデーション指定: `gorm:"type:varchar(255)"`
+     - JSON タグはキャメルケース: `json:"createdAt"`
+     - パスワードなどの隠すフィールド: `json:"-"`
+
+   - **DTO パターン**
+
+     - `CreateXxxRequest`: 作成時の必須フィールド、バリデーション付き
+     - `UpdateXxxRequest`: 更新時の必須フィールド + 任意フィールド（ポインタ型）
+     - `XxxResponse`: JSON レスポンス用（パスワード等機密情報は除外）
+
+   - **Service 層パターン**
+
+     - エラーはエラーハンドリング（panic 不使用）
+     - パスワードハッシュ化は Service 層で実行
+     - ビジネスロジック（重複チェック等）は Service に集約
+
+   - **Repository 層パターン**
+
+     - GORM 操作をカプセル化
+     - エラー処理を含める（`if err != nil { return nil, err }`）
+
+   - **Controller 層パターン**
+
+     - `ShouldBindJSON` でリクエスト検証
+     - HTTP ステータスコードを正確に返す（201: Created, 400: Bad Request など）
+     - エラーレスポンスは `gin.H{"error": err.Error()}`
+
+   - **Router パターン**
+     - `router/router.go` で全ルート定義
+     - `SetupXxxRoutes(engine *gin.Engine, db *gorm.DB)` で初期化
+     - main.go から呼び出す
+
+6. **テスト**
    - ユニットテストは `_test.go` ファイルに記述
    - `go test -v -race` で実行可能な状態を保つ
+   - テストパターン:
+     - Repository: GORM CRUD 確認
+     - Service: ビジネスロジック + エラーケース確認
+     - Controller: HTTP ステータス + JSON レスポンス確認
+   - SQLite インメモリ DB を使用して高速化
 
 ---
 
-## �💡 コード分析時のポイント
+## 💡 コード分析時のポイント
 
 1. **フロントエンド分析**:
 
@@ -209,6 +258,7 @@ GitHub Actions で自動的に以下を実行：
    - Gin ルータの設定を確認
    - GORM モデルと複数 DB 対応を考慮
    - エラーハンドリングを確認（golangci-lint による検査）
+   - User モデルの CRUD パターンに従う
 
 3. **共通**:
    - Docker 環境での実行を念頭に、環境変数の設定を確認
