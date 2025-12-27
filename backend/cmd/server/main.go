@@ -5,6 +5,7 @@ import (
 	"simple-ledger/internal/common/config"
 	migration "simple-ledger/internal/common/db"
 	"simple-ledger/internal/common/db/seeder"
+	userRouter "simple-ledger/internal/user/router"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,6 +47,13 @@ func main() {
 		seeder.SeedAll(db)
 		log.Print("Data seeding completed.")
 	}
+
+	/*
+	 * ルート定義
+	 */
+	log.Print("Setting up routes...")
+	apiGroup := router.Group("/api")
+	userRouter.SetupUserRoutes(apiGroup, db)
 
 	// サーバー起動
 	if err := router.Run(":8080"); err != nil {
