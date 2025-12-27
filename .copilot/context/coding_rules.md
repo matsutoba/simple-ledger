@@ -184,7 +184,13 @@ GitHub Actions で自動的に以下を実行：
    - インポートは自動フォーマットで整理（`.air.toml` で実行）
    - 不要なインポートは記述しない
 
-4. **テスト**
+4. **JSON レスポンス形式**
+
+   - struct タグのキャメルケース必須（React フロントエンドとの互換性）
+   - 例: `json:"createdAt"`, `json:"lastLoginAt"`, `json:"isActive"`
+   - 隠す必要があるフィールドは `json:"-"` を使用
+
+5. **テスト**
    - ユニットテストは `_test.go` ファイルに記述
    - `go test -v -race` で実行可能な状態を保つ
 
