@@ -15,10 +15,5 @@ tmp_dir = "tmp"
   poll = true
   poll_interval = 1000
 
-[build.post_cmd]
-  # goimportsで自動フォーマット
-  cmd = "goimports -w ."
-  needs_shell = false
-
 [log]
   time = true
