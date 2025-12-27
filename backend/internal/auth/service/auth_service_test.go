@@ -14,7 +14,7 @@ import (
 
 func setupTestAuthService() *AuthService {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&models.User{})
+	_ = db.AutoMigrate(&models.User{})
 	userRepo := repository.NewUserRepository(db)
 	security.InitJWT("test-secret", 1, 1)
 	return NewAuthService(userRepo)
@@ -32,7 +32,7 @@ func TestLogin_Success(t *testing.T) {
 		Role:     "user",
 		IsActive: true,
 	}
-	service.userRepo.CreateUser(user)
+	_ = service.userRepo.CreateUser(user)
 
 	// ログイン処理
 	accessToken, refreshToken, err := service.Login("test@example.com", "password123")
@@ -64,7 +64,7 @@ func TestLogin_InvalidPassword(t *testing.T) {
 		Role:     "user",
 		IsActive: true,
 	}
-	service.userRepo.CreateUser(user)
+	_ = service.userRepo.CreateUser(user)
 
 	// 不正なパスワードでログイン
 	accessToken, refreshToken, err := service.Login("test@example.com", "wrongpassword")
@@ -92,7 +92,7 @@ func TestLogin_InactiveUser(t *testing.T) {
 	}
 
 	// ユーザーを無効化
-	service.userRepo.UpdateUser(user.ID, map[string]interface{}{"is_active": false})
+	_, _ = service.userRepo.UpdateUser(user.ID, map[string]interface{}{"is_active": false})
 
 	// ログイン処理
 	accessToken, refreshToken, err := service.Login("inactive@example.com", "password123")
@@ -150,14 +150,14 @@ func TestRefreshAccessToken_InactiveUser(t *testing.T) {
 		Role:     "user",
 		IsActive: true,
 	}
-	service.userRepo.CreateUser(user)
+	_ = service.userRepo.CreateUser(user)
 
 	// ログイン
 	_, refreshToken, _ := service.Login("test@example.com", "password123")
 
 	// ユーザーを無効化
 	user.IsActive = false
-	service.userRepo.UpdateUser(user.ID, map[string]interface{}{"is_active": false})
+	_, _ = service.userRepo.UpdateUser(user.ID, map[string]interface{}{"is_active": false})
 
 	// トークン更新を試みる
 	newAccessToken, err := service.RefreshAccessToken(refreshToken)

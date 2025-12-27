@@ -14,7 +14,7 @@ import (
 
 func setupTestService() *UserService {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&models.User{})
+	_ = db.AutoMigrate(&models.User{})
 	repo := repository.NewUserRepository(db)
 	return NewUserService(repo)
 }
@@ -84,7 +84,7 @@ func TestGetAllUsers(t *testing.T) {
 	}
 
 	for _, req := range requests {
-		service.CreateUser(&req)
+		_, _ = service.CreateUser(&req)
 	}
 
 	users, err := service.GetAllUsers()

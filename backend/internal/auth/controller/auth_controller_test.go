@@ -62,7 +62,7 @@ func TestLogin_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response dto.LoginResponse
-	json.Unmarshal(w.Body.Bytes(), &response)
+	_ = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NotEmpty(t, response.AccessToken)
 	assert.NotEmpty(t, response.RefreshToken)
 	assert.Equal(t, security.GetTokenExpirationSeconds(), response.ExpiresIn)
@@ -89,7 +89,7 @@ func TestLogin_InvalidEmail(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 
 	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
+	_ = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NotNil(t, response["error"])
 }
 
@@ -161,7 +161,7 @@ func TestRefreshToken_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]interface{}
-	json.Unmarshal(w.Body.Bytes(), &response)
+	_ = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NotEmpty(t, response["accessToken"])
 	assert.Equal(t, float64(security.GetTokenExpirationSeconds()), response["expiresIn"])
 }
