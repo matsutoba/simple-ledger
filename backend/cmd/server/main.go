@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	authRouter "simple-ledger/internal/auth/router"
 	"simple-ledger/internal/common/config"
 	migration "simple-ledger/internal/common/db"
 	"simple-ledger/internal/common/db/seeder"
+	"simple-ledger/internal/common/security"
 	userRouter "simple-ledger/internal/user/router"
 
 	"github.com/gin-gonic/gin"
@@ -49,11 +51,23 @@ func main() {
 	}
 
 	/*
+	 * JWT 初期化
+	 */
+	log.Print("Initializing JWT...")
+	jwtSecret := config.GetEnv("JWT_SECRET", "")
+	tokenExpirationHours := config.GetEnvAsInt("TOKEN_EXPIRATION_HOURS", 1)
+	refreshTokenExpirationHours := config.GetEnvAsInt("REFRESH_TOKEN_EXPIRATION_HOURS", 1)
+	security.InitJWT(jwtSecret, tokenExpirationHours, refreshTokenExpirationHours)
+	log.Printf("JWT initialized (token: %d hours, refresh: %d hours)", tokenExpirationHours, refreshTokenExpirationHours)
+
+	/*
 	 * ルート定義
 	 */
 	log.Print("Setting up routes...")
 	apiGroup := router.Group("/api")
 	userRouter.SetupUserRoutes(apiGroup, db)
+	authRouter.SetupAuthRoutes(apiGroup, db)
+	log.Print("Routes setup completed.")
 
 	// サーバー起動
 	if err := router.Run(":8080"); err != nil {
