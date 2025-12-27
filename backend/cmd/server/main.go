@@ -8,7 +8,9 @@ import (
 	"simple-ledger/internal/common/db/seeder"
 	"simple-ledger/internal/common/security"
 	userRouter "simple-ledger/internal/user/router"
+	"strings"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,6 +22,21 @@ func main() {
 	 */
 	log.Print("Loading environment variables...")
 	config.LoadEnv()
+
+	/*
+	 * CORS 設定
+	 */
+	allowedOrigins := config.GetEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:80")
+	allowOriginsList := strings.Split(allowedOrigins, ",")
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     allowOriginsList,
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * 3600,
+	}))
+	log.Printf("CORS configured for origins: %v", allowOriginsList)
 
 	/*
 	 * DB接続
