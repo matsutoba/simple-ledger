@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"simple-ledger/internal/common/config"
 
 	"github.com/gin-gonic/gin"
 )
@@ -9,32 +10,21 @@ import (
 func main() {
 	router := gin.Default()
 
-	// ヘルスチェックエンドポイント
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status": "ok",
-		})
-	})
+	/*
+	 * 環境変数読み込み
+	 */
+	log.Print("Loading environment variables...")
+	config.LoadEnv()
 
-	// サンプルエンドポイント
-	router.GET("/api/v1/hello", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Hello, World!",
-		})
-	})
-
-	// POST example
-	router.POST("/api/v1/data", func(c *gin.Context) {
-		var data map[string]interface{}
-		if err := c.BindJSON(&data); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(201, gin.H{
-			"message": "Data received",
-			"data":    data,
-		})
-	})
+	/*
+	 * DB接続
+	 */
+	log.Print("Setting up database...")
+	db, err := config.SetupDatabase()
+	if err != nil {
+		log.Fatalf("Failed to setup database: %v", err)
+	}
+	log.Printf("Database connected successfully: %v", db != nil)
 
 	// サーバー起動
 	if err := router.Run(":8080"); err != nil {
