@@ -8,25 +8,32 @@ interface LoginResponse {
   expiresIn: number;
 }
 
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+const DEMO_EMAIL = process.env.NEXT_PUBLIC_DEMO_EMAIL || 'admin@example.com';
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD || 'password123';
+
 export default function Home() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(DEMO_MODE ? DEMO_EMAIL : '');
+  const [password, setPassword] = useState(DEMO_MODE ? DEMO_PASSWORD : '');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken] = useState('');
+  const [isDemoMode] = useState(DEMO_MODE);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('accessToken');
     if (savedToken) {
       setIsLoggedIn(true);
       setToken(savedToken);
+    } else if (DEMO_MODE) {
+      // デモモード: 自動ログイン
+      performLogin(DEMO_EMAIL, DEMO_PASSWORD);
     }
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const performLogin = async (loginEmail: string, loginPassword: string) => {
     setLoading(true);
     setMessage('');
 
@@ -36,7 +43,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
 
       const data: LoginResponse = await response.json();
@@ -62,6 +69,11 @@ export default function Home() {
     }
   };
 
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await performLogin(email, password);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -74,9 +86,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
-          simple-ledger
-        </h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">simple-ledger</h1>
+          {isDemoMode && (
+            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+              DEMO
+            </span>
+          )}
+        </div>
 
         {!isLoggedIn ? (
           <form onSubmit={handleLogin} className="space-y-6">
