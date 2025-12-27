@@ -3,8 +3,8 @@ package seeder
 import (
 	"fmt"
 	"log"
+	"simple-ledger/internal/common/security"
 	"simple-ledger/internal/models"
-	"simple-ledger/internal/security"
 
 	"gorm.io/gorm"
 )

@@ -2,8 +2,8 @@ package service
 
 import (
 	"fmt"
+	"simple-ledger/internal/common/security"
 	"simple-ledger/internal/models"
-	"simple-ledger/internal/security"
 	"simple-ledger/internal/user/dto"
 	"simple-ledger/internal/user/repository"
 
