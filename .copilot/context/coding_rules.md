@@ -196,29 +196,57 @@ GitHub Actions で自動的に以下を実行：
 
 1. **エラーハンドリング（必須）**
 
-   - 設定ファイル: [.air.toml](../backend/.air.toml)
-   - すべての関数呼び出しのエラーをチェック
+   - すべての戻り値のエラーをチェック（golangci-lint の errcheck で検査）
+   - エラーハンドリングの基本パターン：
+
+   ```go
+   // ❌ 悪い例：エラーを無視
+   db.AutoMigrate(&models.User{})
+   service.userRepo.CreateUser(user)
+
+   // ✅ 良い例：エラーをチェック
+   if err := db.AutoMigrate(&models.User{}); err != nil {
+       return fmt.Errorf("migration failed: %w", err)
+   }
+   if err := service.userRepo.CreateUser(user); err != nil {
+       return fmt.Errorf("create user failed: %w", err)
+   }
+
+   // ✅ テストコードでエラーを無視する場合は明示
+   _ = db.AutoMigrate(&models.User{})
+   _ = service.userRepo.CreateUser(user)
+   ```
+
+   - エラーがない場合も `_ =` で明示的に無視
+   - `json.Unmarshal`, `json.Marshal` などの API も同様にチェック
+   - テストコード内でも同じルールを適用
+
+2. **関数の戻り値**
+
+   - 戻り値がある関数は必ずハンドリング
+   - 複数の戻り値がある場合は全てをチェック（例：`*User, error`）
+   - テストコードでも無視するなら `_, _ =` で明示
    - golangci-lint の `errcheck` ルールを遵守
    - 例: `if err != nil { return err }` を忘れずに
 
-2. **命名規則**
+3. **命名規則**
 
    - エクスポート関数: PascalCase
    - プライベート関数: camelCase
    - 定数: UPPER_SNAKE_CASE
 
-3. **goimports 対応**
+4. **goimports 対応**
 
    - インポートは自動フォーマットで整理（`.air.toml` で実行）
    - 不要なインポートは記述しない
 
-4. **JSON レスポンス形式**
+5. **JSON レスポンス形式**
 
    - struct タグのキャメルケース必須（React フロントエンドとの互換性）
    - 例: `json:"createdAt"`, `json:"lastLoginAt"`, `json:"isActive"`
    - 隠す必要があるフィールドは `json:"-"` を使用
 
-5. **CRUD 実装パターン（User モデルに従う）**
+6. **CRUD 実装パターン（User モデルに従う）**
 
    - **ディレクトリ構造**: `internal/{entity}/`
 
@@ -262,7 +290,7 @@ GitHub Actions で自動的に以下を実行：
      - `SetupXxxRoutes(engine *gin.Engine, db *gorm.DB)` で初期化
      - main.go から呼び出す
 
-6. **JWT 認証パターン（Auth パッケージに従う）**
+7. **JWT 認証パターン（Auth パッケージに従う）**
 
    - **認証方式**: ステートレス JWT 認証
 
@@ -321,7 +349,7 @@ GitHub Actions で自動的に以下を実行：
      - データベースにはトークン保存なし（ステートレス設計）
      - ログアウト機能は必要に応じてトークンブラックリスト実装可
 
-7. **テスト**
+8. **テスト**
    - ユニットテストは `_test.go` ファイルに記述
    - `go test -v -race` で実行可能な状態を保つ
    - テストパターン:
