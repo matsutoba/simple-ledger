@@ -35,6 +35,8 @@ next-env.d.ts
 # Go
 /backend/tmp/
 /backend/dist/
+/backend/server
+/backend/*.out
 
 # Go binary and executable files
 *.exe
