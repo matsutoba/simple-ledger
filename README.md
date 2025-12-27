@@ -1,194 +1,132 @@
 # simple-ledger
 
-シンプルな家計簿アプリケーション
+シンプルな家計簿アプリケーション。モダンな技術スタックを使用した、フルスタック Web アプリケーションです。
 
-## 技術スタック
+## 📋 プロジェクト概要
 
-### フロントエンド
+フロントエンドと REST API バックエンドで構成された、スケーラブルなウェブアプリケーションです。
+ユーザー認証、ユーザー管理機能を実装し、本番環境での運用を想定した設計になっています。
 
-- **フレームワーク**: Next.js 15 (App Router)
-- **言語**: TypeScript
-- **スタイリング**: Tailwind CSS
-- **ビルドツール**: Turbopack
-- **コード整形**: Prettier
-- **ノード**: Node.js 25.0.0
+### 実装済み機能
 
-### バックエンド
+- ✅ **ユーザー認証**: JWT ベースのステートレス認証
+- ✅ **ユーザー管理**: CRUD 操作（作成・参照・更新・削除）
+- ✅ **自動テストデータ投入**: 開発環境での初期データ自動生成
+- ✅ **複数データベース対応**: MySQL / PostgreSQL / SQLite に対応
 
-- **言語**: Go 1.25.4
-- **フレームワーク**: Gin
-- **ORM**: GORM
-- **データベースドライバー**: MySQL, PostgreSQL, SQLite
-- **ホットリロード**: Air
-- **コード整形**: goimports
+## 🛠️ 技術スタック
 
-### インフラ
+| レイヤー | 技術 |
+|---------|------|
+| **フロントエンド** | Next.js 15, TypeScript, Tailwind CSS |
+| **バックエンド** | Go 1.25.4, Gin Framework, GORM |
+| **認証** | JWT (ステートレス認証), bcrypt (パスワード管理) |
+| **インフラ** | Docker, Docker Compose |
+| **開発ツール** | proto (バージョン管理), Air (ホットリロード) |
 
-- **コンテナ**: Docker
-- **オーケストレーション**: Docker Compose
-- **バージョン管理**: proto
+## 🏗️ アーキテクチャ
 
-## セットアップ手順
+### バックエンド設計
+
+**レイヤー構造**:
+- **Controller**: HTTP リクエスト/レスポンス処理
+- **Service**: ビジネスロジック実装
+- **Repository**: データベース操作の抽象化
+- **DTO**: リクエスト/レスポンス検証
+
+**認証方式**: ステートレス JWT 認証
+- トークンはクライアント側で保持
+- サーバーは署名検証のみを実行（DB 参照不要）
+- 水平スケーリングに対応
+
+### データベーススキーマ
+
+User テーブル（認証・ユーザー管理用）
+
+```
+- id: 主キー
+- email: ユニークキー
+- name: ユーザー名
+- password: bcrypt ハッシュ
+- role: admin / user
+- is_active: ユーザーステータス
+- last_login_at: ログイン追跡用
+- timestamps: 作成/更新日時
+```
+
+## 🚀 クイックスタート
 
 ### 前提条件
 
-- [proto](https://moonrepo.dev/docs/proto) がインストール済み
 - Docker がインストール済み
+- proto がインストール済み
 
-### 1. proto でバージョン設定
-
-プロジェクトディレクトリで以下を実行して、Go と Node.js のバージョンを自動設定します：
+### セットアップ
 
 ```bash
+# バージョン設定
 proto install
-```
 
-### 2. 依存関係のインストール
-
-#### フロントエンド
-
-```bash
-cd frontend
-pnpm install
-cd ..
-```
-
-#### バックエンド
-
-```bash
-cd backend
-go mod download
-cd ..
-```
-
-### 3. Docker で環境構築
-
-```bash
+# コンテナ起動
 docker-compose up --build -d
 ```
 
-これにより以下が起動します：
+### アクセス
 
-- **フロントエンド（Next.js）**: ポート 80（本番ビルド）
-- **バックエンド（Gin）**: ポート 8080
+- **フロントエンド**: http://localhost
+- **バックエンド API**: http://localhost:8080
 
-## 開発
+## 📊 API 概要
 
-### フロントエンド開発
+| エンドポイント | メソッド | 説明 |
+|---------------|---------|------|
+| `/api/auth/login` | POST | ユーザーログイン |
+| `/api/auth/refresh` | POST | トークン更新 |
+| `/api/users` | GET | ユーザー一覧取得 |
+| `/api/users` | POST | ユーザー作成 |
+| `/api/users/:id` | GET | ユーザー詳細取得 |
+| `/api/users/:id` | PATCH | ユーザー更新 |
+| `/api/users/:id` | DELETE | ユーザー削除 |
 
-ローカル開発環境で実行：
+認証が必要なエンドポイント（`/api/users/*`）には、`Authorization: Bearer <token>` ヘッダーが必須です。
 
-```bash
-cd frontend
-pnpm install
-pnpm dev
-```
-
-- ブラウザで http://localhost:3000 にアクセス
-- ホットリロード有効
-
-### バックエンド開発
-
-ローカル開発環境で実行：
+## ✅ テスト
 
 ```bash
-cd backend
-go mod download
-air
+# フロントエンド
+cd frontend && pnpm test
+
+# バックエンド
+cd backend && go test ./...
 ```
 
-- API は http://localhost:8080 で利用可能
-- Air がコード変更を自動検知してホットリロード
+全レイヤー（Repository, Service, Controller）でユニットテストを実装しています。
 
-## Docker コマンド
+## 🔄 CI/CD
 
-### コンテナの起動
+GitHub Actions で自動化：
+- フロントエンド: ESLint, ビルド, Jest テスト
+- バックエンド: go vet, golangci-lint, go test
 
-```bash
-docker-compose up --build -d
+## 📁 ディレクトリ構成
+
+```
+simple-ledger/
+├── frontend/           # Next.js フロントエンド
+├── backend/            # Go REST API
+├── docker-compose.yml  # インフラ設定
+└── .copilot/           # 開発ガイドライン
 ```
 
-### ログ確認
+詳細な開発ガイドは [.copilot/context/coding_rules.md](.copilot/context/coding_rules.md) を参照してください。
 
-```bash
-docker-compose logs -f
-```
-
-### コンテナの停止
-
-```bash
-docker-compose down
-```
-
-## コード整形
-
-保存時に自動的にフォーマットされます：
+## 📝 コーディング規約
 
 - **Go**: goimports で自動整形
 - **TypeScript/JavaScript**: Prettier で自動整形
+- **エラーハンドリング**: panic を使わない例外処理
+- **テスト**: レイヤーごとの単体テスト実装
 
-詳細は `.vscode/settings.json` を参照
-
-## CI/CD
-
-### GitHub Actions
-
-自動的に以下が実行されます：
-
-**フロントエンド:**
-
-- ✅ ESLint チェック
-- ✅ Next.js ビルド確認
-- ✅ Jest テスト実行
-
-**バックエンド:**
-
-- ✅ go vet チェック
-- ✅ golangci-lint チェック
-- ✅ go test 実行
-
-実行タイミング:
-
-- `main` / `develop` ブランチへの push
-- Pull Request 作成時
-
-### ブランチ保護ルール（推奨）
-
-`main` ブランチへのマージ前に CI を成功させることを強制：
-
-GitHub Settings → Branches → Add rule:
-
-1. Branch name pattern: `main`
-2. ✅ Require status checks to pass before merging
-3. 以下のチェックを選択:
-   - `Frontend - ESLint`
-   - `Frontend - Build`
-   - `Frontend - Jest Tests`
-   - `Backend - Lint & Test`
-
-## ディレクトリ構成
-
-```
-.
-├── frontend/          # Next.js フロントエンド
-├── backend/           # Go バックエンド
-├── docker-compose.yml # Docker Compose 設定
-├── .proto-tools.toml  # proto バージョン管理
-├── .gitignore         # Git 無視ファイル設定
-└── README.md          # このファイル
-```
-
-## トラブルシューティング
-
-### Golang コンテナが終了する
-
-- `.air.toml` が正しく存在するか確認
-- `go mod download` が実行されているか確認
-
-### Node のバージョンが異なる
-
-- `proto install` を実行して正しいバージョンを設定
-
-## ライセンス
+## 📄 ライセンス
 
 MIT
