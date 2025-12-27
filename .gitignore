@@ -18,6 +18,10 @@
 .DS_Store
 *.pem
 
+# environment variables (local overrides)
+.env.local
+frontend/.env.local
+
 # debug
 npm-debug.log*
 yarn-debug.log*
@@ -35,6 +39,8 @@ next-env.d.ts
 # Go
 /backend/tmp/
 /backend/dist/
+/backend/server
+/backend/*.out
 
 # Go binary and executable files
 *.exe
