@@ -22,7 +22,7 @@ import (
 func setupTestAuthController() (*AuthController, *gorm.DB) {
 	gin.SetMode(gin.TestMode)
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&models.User{})
+	_ = db.AutoMigrate(&models.User{})
 	userRepo := repository.NewUserRepository(db)
 	authService := service.NewAuthService(userRepo)
 	ctrl := NewAuthController(authService)

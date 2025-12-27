@@ -21,7 +21,7 @@ import (
 func setupTestController() (*UserController, *gorm.DB) {
 	gin.SetMode(gin.TestMode)
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&models.User{})
+	_ = db.AutoMigrate(&models.User{})
 	repo := repository.NewUserRepository(db)
 	svc := service.NewUserService(repo)
 	ctrl := NewUserController(svc)
@@ -51,7 +51,7 @@ func TestCreateUserSuccess(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	var response dto.UserResponse
-	json.Unmarshal(w.Body.Bytes(), &response)
+	_ = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.Equal(t, "test@example.com", response.Email)
 	assert.Equal(t, "Test User", response.Name)
 }
@@ -102,7 +102,7 @@ func TestGetUser(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response dto.UserResponse
-	json.Unmarshal(w.Body.Bytes(), &response)
+	_ = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.Equal(t, "test@example.com", response.Email)
 }
 
@@ -142,7 +142,7 @@ func TestGetAllUsers(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var responses []dto.UserResponse
-	json.Unmarshal(w.Body.Bytes(), &responses)
+	_ = json.Unmarshal(w.Body.Bytes(), &responses)
 	assert.Equal(t, 2, len(responses))
 }
 
