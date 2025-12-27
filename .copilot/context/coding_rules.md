@@ -110,8 +110,36 @@ simple-ledger/
   - 未使用の変数・インポートを検査
 - **フレームワーク**: Gin REST API
 - **ORM**: GORM (MySQL/PostgreSQL/SQLite 対応)
+- **認証**: JWT (github.com/golang-jwt/jwt/v5)
+- **パスワード**: bcrypt (golang.org/x/crypto/bcrypt)
 - **テスト**: go test で実行（`go test -v -race -coverprofile=coverage.out ./...`）
 - **Auto Format**: [backend/.air.toml](../backend/.air.toml) で goimports 自動実行
+
+### 環境変数設定
+
+バックエンドは `.env` ファイルで環境変数を管理：
+
+```
+# JWT 設定
+JWT_SECRET=development-secret-key-change-in-production
+TOKEN_EXPIRATION_HOURS=1
+REFRESH_TOKEN_EXPIRATION_HOURS=1
+
+# アプリケーション
+APP_ENV=development
+PORT=8080
+
+# データベース
+DB_HOST=mysql
+DB_PORT=3306
+DB_NAME=myapp
+DB_USER=root
+DB_PASSWORD=password
+```
+
+- `APP_ENV=production` で本番環境
+- 開発環境では自動的にシードデータを投入
+- 環境変数は `config.GetEnv()`, `config.GetEnvAsInt()` で取得
 
 ---
 
@@ -234,7 +262,66 @@ GitHub Actions で自動的に以下を実行：
      - `SetupXxxRoutes(engine *gin.Engine, db *gorm.DB)` で初期化
      - main.go から呼び出す
 
-6. **テスト**
+6. **JWT 認証パターン（Auth パッケージに従う）**
+
+   - **認証方式**: ステートレス JWT 認証
+
+     - トークンはデータベースに保存しない
+     - 署名検証はメモリ上で実行（署名鍵で検証）
+     - スケーラビリティが高く、複数サーバーに対応
+
+   - **ディレクトリ構造**: `internal/auth/`
+
+     - `controller/` - ログイン・トークン更新エンドポイント
+     - `service/` - ユーザー認証・トークン生成ロジック
+     - `dto/` - LoginRequest, LoginResponse など
+     - `middleware/` - JWT 検証ミドルウェア
+     - `router/` - 認証ルート定義
+
+   - **セキュリティ パッケージ** (`internal/common/security/`)
+
+     - `jwt.go`:
+       - `InitJWT(secret string, tokenExpirationHours int, refreshTokenExpirationHours int)` - 初期化（main.go で呼び出す）
+       - `GenerateToken(userID uint, email string, role string, isActive bool)` - アクセストークン生成
+       - `GenerateRefreshToken(userID uint, email string, role string, isActive bool)` - リフレッシュトークン生成
+       - `VerifyToken(tokenString string) (*CustomClaims, error)` - トークン検証（署名検証 + 有効期限チェック）
+       - `GetTokenExpirationSeconds()`, `GetRefreshTokenExpirationSeconds()` - 現在の設定値取得
+     - `password.go`:
+       - `HashPassword(password string) (string, error)` - bcrypt ハッシング
+       - `VerifyPassword(hashedPassword string, password *string) bool` - パスワード検証
+
+   - **DTO パターン**
+
+     - `LoginRequest`: email, password
+     - `LoginResponse`: accessToken, refreshToken, expiresIn
+     - `RefreshTokenRequest`: refreshToken
+
+   - **Service 層パターン**
+
+     - `Login()`: メールアドレスとパスワードで認証、トークン生成
+     - `RefreshAccessToken()`: リフレッシュトークンでアクセストークン更新
+     - ユーザー有効性チェック（IsActive）を実装
+
+   - **Controller 層パターン**
+
+     - POST `/api/auth/login` - HTTP 200、LoginResponse 返却（accessToken, refreshToken, expiresIn）
+     - POST `/api/auth/refresh` - HTTP 200、新しい accessToken 返却
+     - エラーは HTTP 401 (Unauthorized) で返す
+
+   - **Middleware パターン**
+
+     - `Authorization: Bearer <token>` ヘッダーを検証
+     - `VerifyToken()` で署名検証と有効期限チェック
+     - クレーム情報を gin.Context に格納（`ctx.Set("claims", claims)`）
+     - 無効なトークンは HTTP 401 で拒否
+
+   - **トークン管理**
+     - トークンはクライアント側で保持（localStorage、cookie など）
+     - サーバーはトークン検証時に署名のみチェック
+     - データベースにはトークン保存なし（ステートレス設計）
+     - ログアウト機能は必要に応じてトークンブラックリスト実装可
+
+7. **テスト**
    - ユニットテストは `_test.go` ファイルに記述
    - `go test -v -race` で実行可能な状態を保つ
    - テストパターン:
@@ -242,6 +329,7 @@ GitHub Actions で自動的に以下を実行：
      - Service: ビジネスロジック + エラーケース確認
      - Controller: HTTP ステータス + JSON レスポンス確認
    - SQLite インメモリ DB を使用して高速化
+   - **テスト初期化**: `InitJWT("test-secret", 1, 1)` でテスト用 JWT を初期化
 
 ---
 
@@ -255,12 +343,21 @@ GitHub Actions で自動的に以下を実行：
 
 2. **バックエンド分析**:
 
+   - **初期化順序** in main.go:
+     1. 環境変数読み込み (`config.LoadEnv()`)
+     2. DB 接続設定
+     3. マイグレーション実行
+     4. シードデータ投入（開発環境のみ）
+     5. **JWT 初期化** (`security.InitJWT()` - 環境変数から有効期限を読み込み)
+     6. ルート定義
    - Gin ルータの設定を確認
    - GORM モデルと複数 DB 対応を考慮
    - エラーハンドリングを確認（golangci-lint による検査）
    - User モデルの CRUD パターンに従う
+   - **認証が必要なエンドポイント**: JWT Middleware を適用
 
 3. **共通**:
    - Docker 環境での実行を念頭に、環境変数の設定を確認
    - フロントは pnpm、バックエンドは go mod を使用
    - 依存関係の再現性（ロックファイル）を重視
+   - `.env` に機密情報を含めない（開発環境用デフォルト値のみ）
