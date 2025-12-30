@@ -99,6 +99,43 @@ simple-ledger/
 - **Lint 設定**: [frontend/eslint.config.mjs](../frontend/eslint.config.mjs) を参照
   - ESLint 9 + Next.js Core Web Vitals + TypeScript 対応
   - jest.config.js, jest.setup.js は除外
+- **API クライアント層の共通化**:
+
+  - **API Client** (`lib/api/client.ts`): HTTP 通信の統一化
+    - 認証トークンの自動付与
+    - エラーハンドリングの統一
+    - リトライロジックなどの拡張性を確保
+  - **API 関数** (`lib/api/{feature}.ts`): ドメイン固有の API 関数
+    - `apiClient` を使用して HTTP 通信を実行
+    - トークン保存などのビジネスロジックを実装
+    - 型安全なリクエスト/レスポンスを定義
+  - **Server Action** (`app/actions/{feature}.ts`): サーバーサイド処理
+    - API 関数層を呼び出す（`'use server'` で実行）
+    - ページリダイレクト、セッション管理など
+  - **使用パターン**:
+    - **Server Action から**: `import { login } from '@/lib/api/auth'` で API 関数を呼び出し
+    - **クライアントコンポーネントから**: Server Action または API 関数を直接呼び出し
+    - どちらの場合も同じ API 関数を使用する（コード重複を避ける）
+  - **例** (ログイン):
+
+    ```typescript
+    // lib/api/auth.ts - API関数層
+    export async function login(email, password) {
+      const response = await apiClient.post('/api/auth/login', { email, password });
+      if (response.data) apiClient.setTokens(...);
+      return response;
+    }
+
+    // app/actions/auth.ts - Server Action
+    export async function loginAction(email, password) {
+      const result = await login(email, password);
+      if (result.data) redirect('/');
+    }
+
+    // components/features/auth/LoginForm.tsx - UI層
+    const result = await loginAction(email, password);
+    ```
+
 - **コンポーネント管理**:
   - **shadcn/ui**: `frontend/components/shadcn/ui/` に配置（Figma Make 生成コンポーネント含む）
   - **拡張 UI コンポーネント**: `frontend/components/ui/` に配置（shadcn/ui を拡張・カスタマイズしたコンポーネント）
