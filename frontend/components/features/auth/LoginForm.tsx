@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { loginAction } from '@/app/actions/auth';
+import { loginFormSchema, type LoginFormData } from '@/lib/validations/auth';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { Typography } from '@/components/ui/Typography';
@@ -14,28 +17,33 @@ import { Notification } from '@/components/ui/Notification';
 import { Spinner } from '@/components/ui/Spinner';
 
 export const LoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [apiError, setApiError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginFormSchema),
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
+    setApiError('');
     setIsLoading(true);
 
     try {
-      const result = await loginAction(email, password);
+      const result = await loginAction(data.email, data.password);
 
       // result が undefined の場合は redirect() が成功した状態
       if (result && !result.success) {
-        setError(result.error || 'ログインに失敗しました');
+        setApiError(result.error || 'ログインに失敗しました');
         setIsLoading(false);
       }
       // result が undefined またはリダイレクトされた場合は、
       // ブラウザが自動的にページ遷移するため setIsLoading は実行されない
     } catch (err) {
-      setError('エラーが発生しました');
+      setApiError('エラーが発生しました');
       console.error(err);
       setIsLoading(false);
     }
@@ -57,41 +65,56 @@ export const LoginForm = () => {
               </Typography>
             </BlockStack>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <BlockStack gap="md">
-                {error && (
+                {apiError && (
                   <Notification
                     type="error"
                     title="ログインに失敗しました"
-                    description="メールアドレスまたはパスワードが違います。"
+                    description={apiError}
                     withBackground={true}
+                    onClose={() => setApiError('')}
                   />
                 )}
 
-                <TextField
-                  label="メールアドレス"
-                  icon="mail"
-                  type="email"
-                  value={email}
-                  placeholder="example@email.com"
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                />
-                <TextField
-                  label="パスワード"
-                  icon="lock"
-                  type="password"
-                  value={password}
-                  placeholder="パスワードを入力"
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                />
+                <div>
+                  <TextField
+                    label="メールアドレス"
+                    icon="mail"
+                    type="email"
+                    placeholder="example@email.com"
+                    disabled={isLoading}
+                    {...register('email')}
+                  />
+                  {errors.email && (
+                    <p className="text-red-600 text-sm mt-1">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <TextField
+                    label="パスワード"
+                    icon="lock"
+                    type="password"
+                    placeholder="パスワードを入力"
+                    disabled={isLoading}
+                    {...register('password')}
+                  />
+                  {errors.password && (
+                    <p className="text-red-600 text-sm mt-1">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
 
                 <Button
                   type="submit"
                   color="primary"
                   size="default"
                   width="full"
+                  disabled={isLoading}
                 >
                   ログイン
                 </Button>
