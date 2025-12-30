@@ -84,13 +84,9 @@ export const LoginForm = () => {
                     type="email"
                     placeholder="example@email.com"
                     disabled={isLoading}
+                    errorMessage={errors.email?.message}
                     {...register('email')}
                   />
-                  {errors.email && (
-                    <p className="text-red-600 text-sm mt-1">
-                      {errors.email.message}
-                    </p>
-                  )}
                 </div>
 
                 <div>
@@ -100,13 +96,9 @@ export const LoginForm = () => {
                     type="password"
                     placeholder="パスワードを入力"
                     disabled={isLoading}
+                    errorMessage={errors.password?.message}
                     {...register('password')}
                   />
-                  {errors.password && (
-                    <p className="text-red-600 text-sm mt-1">
-                      {errors.password.message}
-                    </p>
-                  )}
                 </div>
 
                 <Button
