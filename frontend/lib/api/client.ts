@@ -34,7 +34,7 @@ class ApiClient {
    */
   async post<T>(
     path: string,
-    body?: Record<string, any>,
+    body?: Record<string, unknown>,
     options?: RequestInit,
   ): Promise<ApiResponse<T>> {
     return this.request<T>(path, {
@@ -49,7 +49,7 @@ class ApiClient {
    */
   async put<T>(
     path: string,
-    body?: Record<string, any>,
+    body?: Record<string, unknown>,
     options?: RequestInit,
   ): Promise<ApiResponse<T>> {
     return this.request<T>(path, {

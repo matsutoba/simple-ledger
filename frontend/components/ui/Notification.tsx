@@ -50,7 +50,17 @@ export interface NotificationProps {
   date?: string;
 }
 
-const typeConfig = {
+const typeConfig: Record<
+  NotificationType,
+  {
+    icon: 'check-circle' | 'x-circle' | 'alert-circle' | 'info';
+    bg: string;
+    border: string;
+    borderChip: string;
+    text: string;
+    icon_color: string;
+  }
+> = {
   success: {
     icon: 'check-circle',
     bg: 'bg-green-50',
@@ -121,10 +131,7 @@ export const Notification: React.FC<NotificationProps> = ({
     <div className={baseClasses} role="alert">
       {/* アイコン */}
       <div className="flex-shrink-0 pt-0.5">
-        <Icon
-          name={config.icon as any}
-          className={`w-5 h-5 ${config.icon_color}`}
-        />
+        <Icon name={config.icon} className={`w-5 h-5 ${config.icon_color}`} />
       </div>
 
       {/* コンテンツ */}
