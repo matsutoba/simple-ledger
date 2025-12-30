@@ -10,6 +10,7 @@ import { Page } from '@/components/ui/Page';
 import { Container } from '@/components/ui/Container';
 import { Card } from '@/components/ui/Card';
 import { IconBadge } from '@/components/ui/IconBadge';
+import { Notification } from '@/components/ui/Notification';
 
 export const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -57,11 +58,12 @@ export const LoginForm = () => {
             <form onSubmit={handleSubmit}>
               <BlockStack gap="md">
                 {error && (
-                  <div className="rounded bg-red-50 p-3 border border-red-200">
-                    <Typography color="error" variant="small">
-                      {error}
-                    </Typography>
-                  </div>
+                  <Notification
+                    type="error"
+                    title="ログインに失敗しました"
+                    description="メールアドレスまたはパスワードが違います。"
+                    withBackground={true}
+                  />
                 )}
 
                 <TextField
