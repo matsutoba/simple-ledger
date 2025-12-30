@@ -11,6 +11,7 @@ import { Container } from '@/components/ui/Container';
 import { Card } from '@/components/ui/Card';
 import { IconBadge } from '@/components/ui/IconBadge';
 import { Notification } from '@/components/ui/Notification';
+import { Spinner } from '@/components/ui/Spinner';
 
 export const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -42,6 +43,7 @@ export const LoginForm = () => {
 
   return (
     <Page gradientBg="primary" centered>
+      {isLoading && <Spinner fullscreen size="lg" label="ログイン処理中..." />}
       <Container maxWidth="md">
         <Card padding="lg" rounded="xl">
           <BlockStack gap="lg">
@@ -90,9 +92,8 @@ export const LoginForm = () => {
                   color="primary"
                   size="default"
                   width="full"
-                  disabled={isLoading}
                 >
-                  {isLoading ? 'ログイン中...' : 'ログイン'}
+                  ログイン
                 </Button>
               </BlockStack>
             </form>
