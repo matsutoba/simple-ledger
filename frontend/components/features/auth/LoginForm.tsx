@@ -96,12 +96,6 @@ export const LoginForm = () => {
                 </Button>
               </BlockStack>
             </form>
-
-            <BlockStack gap="sm" alignItems="center">
-              <Typography variant="small" color="muted">
-                デモ用：任意のメールアドレスとパスワードでログインできます
-              </Typography>
-            </BlockStack>
           </BlockStack>
         </Card>
       </Container>
