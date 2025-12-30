@@ -99,6 +99,13 @@ simple-ledger/
 - **Lint 設定**: [frontend/eslint.config.mjs](../frontend/eslint.config.mjs) を参照
   - ESLint 9 + Next.js Core Web Vitals + TypeScript 対応
   - jest.config.js, jest.setup.js は除外
+- **コンポーネント管理**:
+  - **shadcn/ui**: `frontend/components/shadcn/ui/` に配置（Figma Make 生成コンポーネント含む）
+  - **拡張 UI コンポーネント**: `frontend/components/ui/` に配置（shadcn/ui を拡張・カスタマイズしたコンポーネント）
+  - **機能コンポーネント**: `frontend/components/features/{feature}/` に配置（業務ロジックを含むコンポーネント）
+  - **インポート**: `@/components/` エイリアスを使用（パス解決は `tsconfig.json` の `"@/*": ["./*"]` で設定）
+  - **コンポーネント再利用**: 新規コンポーネント作成時は既存の shadcn/ui or `components/ui` コンポーネントを活用
+  - **階層構造**: `shadcn/ui` ← `ui/` ← `features/` の依存方向を保つ（逆方向の依存は避ける）
 
 ### バックエンド (Go)
 
@@ -389,3 +396,212 @@ GitHub Actions で自動的に以下を実行：
    - フロントは pnpm、バックエンドは go mod を使用
    - 依存関係の再現性（ロックファイル）を重視
    - `.env` に機密情報を含めない（開発環境用デフォルト値のみ）
+
+---
+
+## 🎨 デザインシステム（デジタル庁準拠）
+
+本プロジェクトは、**デジタル庁デザインシステム** に準拠します。
+
+参考: https://design.digital.go.jp/dads/
+
+### 原則
+
+すべてのフロントエンド開発において、デジタル庁のデザインシステムを基準に:
+
+- セマンティックカラー（primary、secondary、success、error、warning）を使用
+- アクセシビリティを重視（コントラスト比 4.5:1 以上）
+- 日本政府のサイトと一貫性のあるデザインを目指す
+
+### カラーシステム
+
+色は UI ライブラリに依存しないように、**`theme/colors.ts`** に一元管理。
+
+#### ファイル構成
+
+```
+frontend/
+└── theme/
+    ├── colors.ts    # カラーパレット定義（デジタル庁準拠）
+    └── theme.ts     # デザイントークン定義
+```
+
+#### `theme/colors.ts` - カラーパレット定義（デジタル庁準拠）
+
+**3 つのカラー体系から構成:**
+
+1. **keyColors** - キーカラー
+
+   - プライマリーカラーの 4 段階：primary（濃）→ secondary（薄）→ tertiary → background
+
+2. **semanticColors** - セマンティックカラー（機能的な意味）
+
+   - `success` - 成功・完了（緑）
+   - `error` - エラー・危険（赤）
+   - `warning` - 警告（黄色）
+
+3. **commonColors** - 共通カラー
+   - グレースケール（white、gray50 ～ gray900、black）
+
+#### コンポーネントで使用するカラー
+
+すべてのコンポーネントは以下の **5 つの語義的色名** のみを使用：
+
+- **primary** - メインアクション
+- **secondary** - サブアクション
+- **success** - 成功・完了
+- **error** - エラー・削除・危険
+- **warning** - 警告
+
+#### Button コンポーネントでの使用
+
+```tsx
+import { buttonColors, type ButtonColorKey } from "@/theme/colors";
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  color?: ButtonColorKey; // 'primary' | 'secondary' | 'success' | 'error' | 'warning'
+}
+
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ color = "primary", ...props }, ref) => {
+    const colorConfig = buttonColors[color];
+    const combinedClassName = cn(widthClass, colorConfig.bg, colorConfig.text);
+    return (
+      <ShadcnButton variant="ghost" className={combinedClassName} {...props} />
+    );
+  }
+);
+```
+
+**使用例:**
+
+```tsx
+<Button color="primary">ログイン</Button>
+<Button color="secondary">キャンセル</Button>
+<Button color="success">完了</Button>
+<Button color="error">削除</Button>
+<Button color="warning">注意</Button>
+```
+
+#### 作成済みコンポーネント と色対応
+
+- **Button**: color ∈ {primary, secondary, success, error, warning}
+- **IconBadge**: color ∈ {primary, secondary, success, error, warning}
+- **Typography**: color ∈ {primary, secondary, success, error, warning, muted}
+- **Page**: gradientBg ∈ {primary, secondary, success, error, warning}
+
+---
+
+## 🎨 フロントエンド コンポーネント開発ガイドライン
+
+### コンポーネント分割の基準
+
+#### `components/ui/`（再利用可能な UI 部品）
+
+- 複数の画面で使う可能性のあるコンポーネント
+- ビジネスロジックを含まない
+- 例：Typography, Button, Card, Stack, Icon など
+
+#### `components/features/`（機能固有のコンポーネント）
+
+- 特定の機能・ページでのみ使用するコンポーネント
+- ビジネスロジック・状態管理を含む
+- 例：LoginForm, UserProfile など
+
+#### 昇格ルール
+
+他のページでも使うコンポーネントが現れた場合、`components/ui/` に移動させる。
+
+### プロップ設計の原則
+
+#### 基本ルール
+
+- **Tailwind クラス文字列は極力避ける** - `className="text-center"` ❌
+- **列挙型で制御する** - `align="center"` ✅
+- **デフォルト値を明示する** - 利用者の手間を減らす
+
+#### プロップ数の管理
+
+- プロップが 10 個以上になる場合は、新しいコンポーネントへの分割を検討
+- 関連するプロップはグループ化（例：`color`, `bgColor` など）
+
+### Tailwind 使用禁止ルール
+
+#### 禁止パターン
+
+**1. スペーシング（`p-*`, `m-*`, `gap-*`）**
+
+- ❌ `<div className="p-8 gap-4">`
+- ✅ `<Card padding="lg">`, `<BlockStack gap="lg">`
+
+**2. 色・背景（`text-*`, `bg-*`）**
+
+- ❌ `<div className="text-center text-gray-500">`
+- ✅ `<Typography align="center" color="muted">`
+
+**3. サイズ（`w-*`, `h-*`）**
+
+- ❌ `<Button className="w-full h-12">`
+- ✅ `<Button width="full" size="lg">`
+
+**4. 配置（`flex`, `items-center`, `justify-center`）**
+
+- ❌ `<div className="flex items-center justify-center">`
+- ✅ `<InlineStack alignItems="center" justifyContent="center">`
+
+**5. その他（`rounded-*`, `shadow-*`）**
+
+- ❌ `<Card className="rounded-xl shadow-lg">`
+- ✅ `<Card rounded="xl" shadow="lg">`
+
+### 新規コンポーネント作成時のチェックリスト
+
+#### 1. 型定義
+
+- [ ] `Record<Type, string>` マップで値を管理
+- [ ] 型名は `<ComponentName>Props` にする
+- [ ] デフォルト値を `Props` インターフェースに記載
+
+#### 2. クラス合成
+
+- [ ] 複数クラスの合成には `cn()` を使う
+- [ ] 末尾に `.trim()` で不要な空白を削除
+
+#### 3. コンポーネント実装
+
+- [ ] `React.forwardRef` を使用（再利用性向上）
+- [ ] `displayName` を設定（デバッグ時に便利）
+
+### 命名規則
+
+#### ファイル・コンポーネント名
+
+- PascalCase を使用
+- 例：`Button.tsx`, `IconBadge.tsx`, `TextField.tsx`
+
+### 作成済みコンポーネント一覧
+
+#### レイアウト系
+
+- **`BlockStack`**, **`InlineStack`**: `gap`, `padding`, `alignItems`, `justifyContent`
+- **`Card`**: `padding`, `rounded`, `shadow`
+- **`Container`**: `maxWidth`
+- **`Page`**: `gradientBg` ∈ {primary, secondary, success, error, warning}, `centered`, `padding`
+
+#### テキスト系
+
+- **`Typography`**: `variant`, `color` ∈ {primary, secondary, success, error, warning, muted}, `align`, `as`
+
+#### フォーム系
+
+- **`TextField`**: `label`, `icon`, 標準 input 属性
+- **`Button`**: `color` ∈ {primary, secondary, success, error, warning}, `size`, `width`, `isLoading`
+
+#### アイコン系
+
+- **`Icon`**: `name`, `size`
+- **`IconBadge`**: `icon`, `color` ∈ {primary, secondary, success, error, warning}, `size`
+
+### デザインシステム（カラーパレット）
+
+⚠️ **重要**: デザインシステムの詳細は、上記「デザインシステム（デジタル庁準拠）」セクションを参照してください。

@@ -60,7 +60,8 @@ coverage.txt
 vendor/
 
 # IDE
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .idea/
 *.swp
 *.swo
