@@ -61,6 +61,14 @@ export const buttonSize = {
 
 export type ButtonSizeKey = keyof typeof buttonSize;
 
+export const spinnerSize = {
+  sm: 'w-4 h-4',
+  md: 'w-8 h-8',
+  lg: 'w-12 h-12',
+} as const;
+
+export type SpinnerSizeKey = keyof typeof spinnerSize;
+
 // 全デザイントークンを一つのオブジェクトにまとめる
 export const theme = {
   spacing,
@@ -69,4 +77,5 @@ export const theme = {
   fontWeight,
   maxWidth,
   buttonSize,
+  spinnerSize,
 } as const;

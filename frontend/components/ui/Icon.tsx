@@ -16,6 +16,8 @@ import {
   ChevronUp,
   ArrowRight,
   Home,
+  AlertCircle,
+  Info,
 } from 'lucide-react';
 
 type IconName =
@@ -35,7 +37,11 @@ type IconName =
   | 'chevronDown'
   | 'chevronUp'
   | 'arrowRight'
-  | 'home';
+  | 'home'
+  | 'check-circle'
+  | 'x-circle'
+  | 'alert-circle'
+  | 'info';
 
 type LucideIcon = React.ComponentType<{ size?: number; className?: string }>;
 
@@ -57,6 +63,10 @@ const iconMap: Record<IconName, LucideIcon> = {
   chevronUp: ChevronUp,
   arrowRight: ArrowRight,
   home: Home,
+  'check-circle': Check,
+  'x-circle': X,
+  'alert-circle': AlertCircle,
+  info: Info,
 };
 
 interface IconProps {

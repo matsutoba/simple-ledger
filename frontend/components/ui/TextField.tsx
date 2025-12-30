@@ -25,10 +25,14 @@ interface TextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   icon?: IconName | React.ComponentType<{ className?: string }>;
   iconPosition?: 'start' | 'end';
+  errorMessage?: string;
 }
 
 export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
-  ({ label, icon, iconPosition = 'start', className, ...props }, ref) => {
+  (
+    { label, icon, iconPosition = 'start', className, errorMessage, ...props },
+    ref,
+  ) => {
     const isIconName = typeof icon === 'string';
     const hasIcon = !!icon;
 
@@ -80,6 +84,7 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
             </div>
           )}
         </div>
+        {errorMessage && <p className="text-red-600 text-sm">{errorMessage}</p>}
       </div>
     );
   },
