@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { loginAction } from '@/app/actions/auth';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
 import { Typography } from '@/components/ui/Typography';
@@ -13,10 +14,29 @@ import { IconBadge } from '@/components/ui/IconBadge';
 export const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('ログイン情報:', { email, password });
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const result = await loginAction(email, password);
+
+      // result が undefined の場合は redirect() が成功した状態
+      if (result && !result.success) {
+        setError(result.error || 'ログインに失敗しました');
+        setIsLoading(false);
+      }
+      // result が undefined またはリダイレクトされた場合は、
+      // ブラウザが自動的にページ遷移するため setIsLoading は実行されない
+    } catch (err) {
+      setError('エラーが発生しました');
+      console.error(err);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -36,6 +56,14 @@ export const LoginForm = () => {
 
             <form onSubmit={handleSubmit}>
               <BlockStack gap="md">
+                {error && (
+                  <div className="rounded bg-red-50 p-3 border border-red-200">
+                    <Typography color="error" variant="small">
+                      {error}
+                    </Typography>
+                  </div>
+                )}
+
                 <TextField
                   label="メールアドレス"
                   icon="mail"
@@ -43,6 +71,7 @@ export const LoginForm = () => {
                   value={email}
                   placeholder="example@email.com"
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
                 <TextField
                   label="パスワード"
@@ -51,6 +80,7 @@ export const LoginForm = () => {
                   value={password}
                   placeholder="パスワードを入力"
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
 
                 <Button
@@ -58,8 +88,9 @@ export const LoginForm = () => {
                   color="primary"
                   size="default"
                   width="full"
+                  disabled={isLoading}
                 >
-                  ログイン
+                  {isLoading ? 'ログイン中...' : 'ログイン'}
                 </Button>
               </BlockStack>
             </form>
