@@ -5,11 +5,13 @@ import './globals.css';
 const notoSansJp = Noto_Sans_JP({
   variable: '--font-noto-sans-jp',
   weight: ['400', '700'],
+  preload: true,
 });
 
 const notoSansMono = Noto_Sans_Mono({
   variable: '--font-noto-sans-mono',
   weight: ['400', '700'],
+  preload: true,
 });
 
 export const metadata: Metadata = {
