@@ -53,33 +53,86 @@ export const commonColors = {
 export type CommonColorKey = keyof typeof commonColors;
 
 // ボタンの色定義 - キーカラーとセマンティックカラーから構成
-export const buttonColors = {
+type ButtonColorName =
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'error'
+  | 'warning';
+
+interface ButtonOutlineColor {
+  border: string;
+  text: string;
+  hover: string;
+}
+
+interface ButtonColorConfig {
+  bg: string;
+  text: string;
+  description: string;
+  outline: ButtonOutlineColor;
+}
+
+const buttonOutline: Record<ButtonColorName, ButtonOutlineColor> = {
+  primary: {
+    border: 'border-blue-600',
+    text: 'text-blue-600',
+    hover: 'hover:bg-blue-50',
+  },
+  secondary: {
+    border: 'border-blue-100',
+    text: 'text-gray-900',
+    hover: 'hover:bg-blue-50',
+  },
+  success: {
+    border: 'border-green-600',
+    text: 'text-green-600',
+    hover: 'hover:bg-green-50',
+  },
+  error: {
+    border: 'border-red-600',
+    text: 'text-red-600',
+    hover: 'hover:bg-red-50',
+  },
+  warning: {
+    border: 'border-yellow-500',
+    text: 'text-yellow-600',
+    hover: 'hover:bg-yellow-50',
+  },
+};
+
+export const buttonColors: Record<ButtonColorName, ButtonColorConfig> = {
   primary: {
     bg: keyColors.primary.primary,
     text: 'text-white',
     description: 'プライマリアクション用',
+    outline: buttonOutline.primary,
   },
   secondary: {
     bg: keyColors.primary.secondary,
     text: 'text-gray-900',
     description: 'セカンダリアクション用',
+    outline: buttonOutline.secondary,
   },
   success: {
     bg: semanticColors.success.primary,
     text: 'text-white',
     description: '成功・完了操作用',
+    outline: buttonOutline.success,
   },
   error: {
     bg: semanticColors.error.primary,
     text: 'text-white',
     description: 'エラー・危険操作用',
+    outline: buttonOutline.error,
   },
   warning: {
     bg: semanticColors.warning.primary,
     text: 'text-gray-900',
     description: '警告操作用',
+    outline: buttonOutline.warning,
   },
-} as const;
+};
 
 export type ButtonColorKey = keyof typeof buttonColors;
 
@@ -94,6 +147,19 @@ export const textColors = {
 } as const;
 
 export type TextColorKey = keyof typeof textColors;
+
+export const formControlColors = {
+  border: 'border-gray-300',
+  focusRing: 'focus:ring-2 focus:ring-blue-500',
+  focusBorder: 'focus:border-transparent',
+  label: 'text-gray-700',
+  icon: 'text-gray-400',
+  helper: 'text-gray-500',
+  error: semanticColors.error.text,
+  errorBorder: 'border-red-500',
+} as const;
+
+export type FormControlColorKey = keyof typeof formControlColors;
 
 // アイコンバッジの色定義 - キーカラーとセマンティックカラーから構成
 export const iconBadgeColors = {

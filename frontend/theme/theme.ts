@@ -1,3 +1,17 @@
+import {
+  bgColors,
+  buttonColors,
+  commonColors,
+  gradientBgs,
+  iconBadgeColors,
+  keyColors,
+  rounded,
+  semanticColors,
+  shadows,
+  textColors,
+  formControlColors,
+} from './colors';
+
 /**
  * デザイントークン定義
  * 色、スペーシング、タイポグラフィなど、プロジェクト全体のデザイン定数
@@ -69,6 +83,22 @@ export const spinnerSize = {
 
 export type SpinnerSizeKey = keyof typeof spinnerSize;
 
+export const colors = {
+  key: keyColors,
+  semantic: semanticColors,
+  common: commonColors,
+  button: buttonColors,
+  text: textColors,
+  iconBadge: iconBadgeColors,
+  background: bgColors,
+  gradient: gradientBgs,
+  formControl: formControlColors,
+  shadows,
+  rounded,
+} as const;
+
+export type ColorTokenKey = keyof typeof colors;
+
 // 全デザイントークンを一つのオブジェクトにまとめる
 export const theme = {
   spacing,
@@ -78,4 +108,7 @@ export const theme = {
   maxWidth,
   buttonSize,
   spinnerSize,
+  colors,
+  shadows,
+  rounded,
 } as const;

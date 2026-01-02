@@ -12,37 +12,6 @@ const widthMap: Record<ButtonWidth, string> = {
   full: 'w-full',
 };
 
-const outlineColorMap: Record<
-  ButtonColorKey,
-  { border: string; text: string; hover: string }
-> = {
-  primary: {
-    border: 'border-blue-600',
-    text: 'text-blue-600',
-    hover: 'hover:bg-blue-50',
-  },
-  secondary: {
-    border: 'border-blue-100',
-    text: 'text-gray-900',
-    hover: 'hover:bg-blue-50',
-  },
-  success: {
-    border: 'border-green-600',
-    text: 'text-green-600',
-    hover: 'hover:bg-green-50',
-  },
-  error: {
-    border: 'border-red-600',
-    text: 'text-red-600',
-    hover: 'hover:bg-red-50',
-  },
-  warning: {
-    border: 'border-yellow-500',
-    text: 'text-yellow-600',
-    hover: 'hover:bg-yellow-50',
-  },
-};
-
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   color?: ButtonColorKey;
   size?: ButtonSize;
@@ -72,7 +41,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     let combinedClassName: string;
 
     if (variant === 'outline') {
-      const outlineConfig = outlineColorMap[color];
+      const outlineConfig = buttonColors[color].outline;
       combinedClassName = cn(
         widthClass,
         'border',
