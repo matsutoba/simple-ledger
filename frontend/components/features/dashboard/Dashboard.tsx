@@ -20,9 +20,9 @@ export const Dashboard: React.FC = () => {
         <Button color="primary">取引を追加</Button>
       </InlineStack>
       <div className="w-full grid grid-cols-3 gap-2">
-        <TrendCard amount={750000} type="trending-up" />
-        <TrendCard amount={38500} type="trending-down" />
-        <TrendCard amount={711500} type="wallet" />
+        <TrendCard amount={750000} type="income" />
+        <TrendCard amount={38500} type="expense" />
+        <TrendCard amount={711500} type="balance" />
       </div>
       <BlanceTrendChart transactions={transactions} />
       <MonthlyBalanceChart transactions={transactions} />

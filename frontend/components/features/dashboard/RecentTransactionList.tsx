@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/Card';
 import { BlockStack } from '@/components/ui/Stack';
 import { Typography } from '@/components/ui/Typography';
-import { Transaction } from '@/types/transaction';
+import { Transaction, TransactionType } from '@/types/transaction';
 import { useMemo } from 'react';
 import { TRANSACTION_TYPE_COLORS } from '@/constants';
 import { TransactionTypeIcon } from './TransactionTypeIcon';
@@ -23,7 +23,7 @@ export const RecentTransactionList: React.FC<RecentTransactionListProps> = ({
       .slice(0, 5);
   }, [transactions]);
 
-  const getTransactionColor = (type: 'income' | 'expense') =>
+  const getTransactionColor = (type: TransactionType) =>
     TRANSACTION_TYPE_COLORS[type];
 
   return (

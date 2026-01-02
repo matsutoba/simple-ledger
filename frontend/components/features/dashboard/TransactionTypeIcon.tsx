@@ -4,9 +4,10 @@ import {
   TRANSACTION_TYPE_BG_COLORS,
   TRANSACTION_TYPE_COLORS,
 } from '@/constants';
+import { TransactionType } from '@/types/transaction';
 
 interface TransactionTypeIconProps {
-  type: 'income' | 'expense';
+  type: TransactionType;
 }
 
 export const TransactionTypeIcon: React.FC<TransactionTypeIconProps> = ({

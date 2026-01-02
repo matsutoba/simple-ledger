@@ -3,30 +3,40 @@ import { Icon } from '@/components/ui/Icon';
 import { InlineStack } from '@/components/ui/Stack';
 import { Typography } from '@/components/ui/Typography';
 import type { IconName } from '@/components/ui/Icon';
-import { TRANSACTION_TYPE_COLORS } from '@/constants';
+import {
+  TRANSACTION_TYPE_BG_COLORS,
+  TRANSACTION_TYPE_COLORS,
+} from '@/constants';
+import { TrendType } from '@/types/transaction';
 
 interface TrendCardProps {
-  type: 'trending-up' | 'trending-down' | 'wallet';
+  type: TrendType;
   amount: number;
 }
 
 export const TrendCard: React.FC<TrendCardProps> = ({ type, amount }) => {
   const title = {
-    'trending-up': '総収入',
-    'trending-down': '総支出',
-    wallet: '収支',
+    income: '総収入',
+    expense: '総支出',
+    balance: '収支',
   };
 
   const color = {
-    'trending-up': TRANSACTION_TYPE_COLORS.income,
-    'trending-down': TRANSACTION_TYPE_COLORS.expense,
-    wallet: TRANSACTION_TYPE_COLORS.balance,
+    income: TRANSACTION_TYPE_COLORS.income,
+    expense: TRANSACTION_TYPE_COLORS.expense,
+    balance: TRANSACTION_TYPE_COLORS.balance,
+  };
+
+  const iconBgColor = {
+    income: TRANSACTION_TYPE_BG_COLORS.income,
+    expense: TRANSACTION_TYPE_BG_COLORS.expense,
+    balance: TRANSACTION_TYPE_BG_COLORS.balance,
   };
 
   const icon: { [key: string]: IconName } = {
-    'trending-up': 'trending-up',
-    'trending-down': 'trending-down',
-    wallet: 'wallet',
+    income: 'trending-up',
+    expense: 'trending-down',
+    balance: 'wallet',
   };
 
   return (
