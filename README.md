@@ -18,7 +18,7 @@
 
 | レイヤー           | 技術                                            |
 | ------------------ | ----------------------------------------------- |
-| **フロントエンド** | Next.js 15, TypeScript, Tailwind CSS            |
+| **フロントエンド** | Next.js 16, TypeScript, Tailwind CSS 4          |
 | **バックエンド**   | Go 1.25.4, Gin Framework, GORM                  |
 | **認証**           | JWT (ステートレス認証), bcrypt (パスワード管理) |
 | **インフラ**       | Docker, Docker Compose                          |

@@ -10,7 +10,7 @@
 
 ### フロントエンド (`frontend/`)
 
-- **フレームワーク**: Next.js 15 (App Router)
+- **フレームワーク**: Next.js 16 (App Router)
 - **言語**: TypeScript 5
 - **ランタイム**: Node.js 25.0.0
 - **パッケージマネージャー**: pnpm
