@@ -16,25 +16,40 @@
 
 ## 🛠️ 技術スタック
 
-| レイヤー | 技術 |
-|---------|------|
-| **フロントエンド** | Next.js 15, TypeScript, Tailwind CSS |
-| **バックエンド** | Go 1.25.4, Gin Framework, GORM |
-| **認証** | JWT (ステートレス認証), bcrypt (パスワード管理) |
-| **インフラ** | Docker, Docker Compose |
-| **開発ツール** | proto (バージョン管理), Air (ホットリロード) |
+| レイヤー           | 技術                                            |
+| ------------------ | ----------------------------------------------- |
+| **フロントエンド** | Next.js 15, TypeScript, Tailwind CSS            |
+| **バックエンド**   | Go 1.25.4, Gin Framework, GORM                  |
+| **認証**           | JWT (ステートレス認証), bcrypt (パスワード管理) |
+| **インフラ**       | Docker, Docker Compose                          |
+| **開発ツール**     | proto (バージョン管理), Air (ホットリロード)    |
+| **UI/UX**          | Figma Make (デザイン生成), shadcn/ui            |
+
+## 🎨 UI デザイン
+
+フロントエンドの UI は以下の設計で構成されています：
+
+- **デザインツール**: Figma Make でコンポーネントを自動生成
+- **コンポーネント分割**: 独自の戦略で UI 層と機能層を分離
+  - `components/shadcn/ui/` - Figma Make が生成した基本コンポーネント
+  - `components/ui/` - shadcn/ui や基本コンポーネントを拡張・カスタマイズ
+  - `components/features/` - ビジネスロジックを含む機能コンポーネント
+- **デザインシステム**: デジタル庁デザインシステムに準拠した色・タイポグラフィー管理
+- **スタイリング**: Tailwind CSS と定数化された色を活用した一貫性のある設計
 
 ## 🏗️ アーキテクチャ
 
 ### バックエンド設計
 
 **レイヤー構造**:
+
 - **Controller**: HTTP リクエスト/レスポンス処理
 - **Service**: ビジネスロジック実装
 - **Repository**: データベース操作の抽象化
 - **DTO**: リクエスト/レスポンス検証
 
 **認証方式**: ステートレス JWT 認証
+
 - トークンはクライアント側で保持
 - サーバーは署名検証のみを実行（DB 参照不要）
 - 水平スケーリングに対応
@@ -78,15 +93,15 @@ docker-compose up --build -d
 
 ## 📊 API 概要
 
-| エンドポイント | メソッド | 説明 |
-|---------------|---------|------|
-| `/api/auth/login` | POST | ユーザーログイン |
-| `/api/auth/refresh` | POST | トークン更新 |
-| `/api/users` | GET | ユーザー一覧取得 |
-| `/api/users` | POST | ユーザー作成 |
-| `/api/users/:id` | GET | ユーザー詳細取得 |
-| `/api/users/:id` | PATCH | ユーザー更新 |
-| `/api/users/:id` | DELETE | ユーザー削除 |
+| エンドポイント      | メソッド | 説明             |
+| ------------------- | -------- | ---------------- |
+| `/api/auth/login`   | POST     | ユーザーログイン |
+| `/api/auth/refresh` | POST     | トークン更新     |
+| `/api/users`        | GET      | ユーザー一覧取得 |
+| `/api/users`        | POST     | ユーザー作成     |
+| `/api/users/:id`    | GET      | ユーザー詳細取得 |
+| `/api/users/:id`    | PATCH    | ユーザー更新     |
+| `/api/users/:id`    | DELETE   | ユーザー削除     |
 
 認証が必要なエンドポイント（`/api/users/*`）には、`Authorization: Bearer <token>` ヘッダーが必須です。
 
@@ -105,6 +120,7 @@ cd backend && go test ./...
 ## 🔄 CI/CD
 
 GitHub Actions で自動化：
+
 - フロントエンド: ESLint, ビルド, Jest テスト
 - バックエンド: go vet, golangci-lint, go test
 
