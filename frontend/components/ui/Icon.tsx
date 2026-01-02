@@ -21,6 +21,9 @@ import {
   DollarSign,
   BarChart3,
   Users,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
 } from 'lucide-react';
 
 export type IconName =
@@ -47,7 +50,10 @@ export type IconName =
   | 'info'
   | 'dollar-sign'
   | 'bar-chart-3'
-  | 'users';
+  | 'users'
+  | 'trending-up'
+  | 'trending-down'
+  | 'wallet';
 
 type LucideIcon = React.ComponentType<{ size?: number; className?: string }>;
 
@@ -76,6 +82,9 @@ const iconMap: Record<IconName, LucideIcon> = {
   'dollar-sign': DollarSign,
   'bar-chart-3': BarChart3,
   users: Users,
+  'trending-up': TrendingUp,
+  'trending-down': TrendingDown,
+  wallet: Wallet,
 };
 
 interface IconProps {

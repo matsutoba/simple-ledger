@@ -1,12 +1,13 @@
 'use client';
 
+import { Dashboard } from '@/components/features/dashboard/Dashboard';
 import { useState } from 'react';
 
 /**
  * ダッシュボードトップページ
  * ログイン後のメインページ (localhost:3000/)
  */
-export default function Dashboard() {
+export default function DashboardPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<
@@ -18,5 +19,9 @@ export default function Dashboard() {
     setCurrentView('dashboard');
   };
 
-  return <main className="bg-gray-50">{/* Main Content */}</main>;
+  return (
+    <main className="bg-gray-50">
+      <Dashboard />
+    </main>
+  );
 }

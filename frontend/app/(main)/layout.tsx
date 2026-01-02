@@ -17,11 +17,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       <InlineStack
         className="grid grid-cols-[180px_1fr] overflow-hidden"
         alignItems="stretch"
+        gap="xs"
       >
         <aside className="flex flex-col overflow-y-auto py-2 px-4 border-r border-gray-200 bg-white">
           <SideMenu />
         </aside>
-        {children}
+        <div className="p-4">{children}</div>
       </InlineStack>
     </div>
   );
