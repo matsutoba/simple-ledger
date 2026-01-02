@@ -5,16 +5,49 @@ import { buttonColors, type ButtonColorKey } from '@/theme/colors';
 
 type ButtonSize = 'default' | 'sm' | 'lg' | 'icon';
 type ButtonWidth = 'auto' | 'full';
+type ButtonVariant = 'solid' | 'outline';
 
 const widthMap: Record<ButtonWidth, string> = {
   auto: '',
   full: 'w-full',
 };
 
+const outlineColorMap: Record<
+  ButtonColorKey,
+  { border: string; text: string; hover: string }
+> = {
+  primary: {
+    border: 'border-blue-600',
+    text: 'text-blue-600',
+    hover: 'hover:bg-blue-50',
+  },
+  secondary: {
+    border: 'border-blue-100',
+    text: 'text-gray-900',
+    hover: 'hover:bg-blue-50',
+  },
+  success: {
+    border: 'border-green-600',
+    text: 'text-green-600',
+    hover: 'hover:bg-green-50',
+  },
+  error: {
+    border: 'border-red-600',
+    text: 'text-red-600',
+    hover: 'hover:bg-red-50',
+  },
+  warning: {
+    border: 'border-yellow-500',
+    text: 'text-yellow-600',
+    hover: 'hover:bg-yellow-50',
+  },
+};
+
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   color?: ButtonColorKey;
   size?: ButtonSize;
   width?: ButtonWidth;
+  variant?: ButtonVariant;
   isLoading?: boolean;
   children: React.ReactNode;
 }
@@ -25,6 +58,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       color = 'primary',
       size = 'default',
       width = 'auto',
+      variant = 'solid',
       isLoading = false,
       disabled,
       className,
@@ -34,16 +68,32 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const widthClass = widthMap[width];
-    const colorConfig = buttonColors[color];
-    const bgClass = colorConfig.bg;
-    const textClass = colorConfig.text;
-    const combinedClassName = cn(
-      widthClass,
-      bgClass,
-      textClass,
-      'hover:opacity-90 transition-opacity cursor-pointer',
-      className,
-    );
+
+    let combinedClassName: string;
+
+    if (variant === 'outline') {
+      const outlineConfig = outlineColorMap[color];
+      combinedClassName = cn(
+        widthClass,
+        'border',
+        outlineConfig.border,
+        outlineConfig.text,
+        outlineConfig.hover,
+        'transition-colors cursor-pointer',
+        className,
+      );
+    } else {
+      const colorConfig = buttonColors[color];
+      const bgClass = colorConfig.bg;
+      const textClass = colorConfig.text;
+      combinedClassName = cn(
+        widthClass,
+        bgClass,
+        textClass,
+        'hover:opacity-90 transition-opacity cursor-pointer',
+        className,
+      );
+    }
 
     return (
       <ShadcnButton

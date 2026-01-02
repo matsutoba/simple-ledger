@@ -9,7 +9,9 @@ type TypographyVariant =
   | 'small'
   | 'xs'
   | 'muted'
-  | 'caption';
+  | 'caption'
+  | 'large'
+  | 'medium';
 
 type TypographyColor =
   | 'default'
@@ -39,6 +41,8 @@ const variantStyles: Record<TypographyVariant, string> = {
   xs: 'text-xs',
   muted: 'text-sm',
   caption: 'text-xs',
+  large: 'text-3xl',
+  medium: 'text-base',
 };
 
 const colorStyles: Record<TypographyColor, string> = {
