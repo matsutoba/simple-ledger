@@ -642,3 +642,320 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 ### デザインシステム（カラーパレット）
 
 ⚠️ **重要**: デザインシステムの詳細は、上記「デザインシステム（デジタル庁準拠）」セクションを参照してください。
+
+
+---
+
+## 📦 定数・型管理ガイドライン
+
+### ディレクトリ構造
+
+```
+frontend/
+├── types/                   # 共通型定義
+│   ├── transaction.ts       # 取引関連の型
+│   └── index.ts            # エクスポート
+├── constants/               # 業務定数
+│   ├── transaction.ts      # 取引関連の定数（色、ラベル、アイコン）
+│   └── index.ts            # エクスポート
+└── components/
+```
+
+### 定数管理のルール
+
+#### 1. **定数の分類と配置**
+
+- **`theme/colors.ts`**: デザインシステムカラー（Tailwind クラス、HEX カラー）
+- **`constants/`**: 業務定数（ラベル、アイコン、色の組み合わせなど）
+
+#### 2. **定数の構造パターン**
+
+取引（Transaction）を例にした定数定義：
+
+```typescript
+// constants/transaction.ts
+
+// テキストカラー（Tailwind クラス）- UI 表示用
+export const TRANSACTION_TYPE_COLORS = {
+  income: 'text-green-600',
+  expense: 'text-red-600',
+} as const;
+
+// 背景色 + テキスト（Tailwind クラス）- Badge/Tag 用
+export const TRANSACTION_TYPE_BG_COLORS = {
+  income: 'bg-green-100',
+  expense: 'bg-red-100',
+} as const;
+
+// HEX カラー - Recharts/グラフライブラリ用
+export const TRANSACTION_TYPE_HEX_COLORS = {
+  income: '#16a34a',     // green-600
+  expense: '#dc2626',    // red-600
+} as const;
+
+// グラフ用カラー（複数タイプ対応）
+export const BALANCE_CHART_HEX_COLORS = {
+  income: '#16a34a',     // green-600
+  expense: '#dc2626',    // red-600
+  balance: '#2563eb',    // blue-600
+} as const;
+
+// テキストラベル
+export const TRANSACTION_TYPE_LABELS = {
+  income: '収支',
+  expense: '支出',
+} as const;
+
+// アイコン名
+export const TRANSACTION_TYPE_ICONS = {
+  income: 'arrow-down-left',
+  expense: 'arrow-up-right',
+} as const;
+```
+
+#### 3. **使用パターン**
+
+```typescript
+// コンポーネントから使用
+import { TRANSACTION_TYPE_COLORS, TRANSACTION_TYPE_LABELS } from '@/constants';
+
+// テキスト色を適用
+<Typography className={TRANSACTION_TYPE_COLORS.income}>
+  {TRANSACTION_TYPE_LABELS.income}
+</Typography>
+
+// グラフに HEX カラーを使用
+<Bar 
+  dataKey="収入" 
+  fill={TRANSACTION_TYPE_HEX_COLORS.income}
+/>
+```
+
+#### 4. **定数追加のチェックリスト**
+
+- [ ] 同じ値が複数個所で使われているか確認
+- [ ] `as const` で型推論を厳密にする
+- [ ] `theme/colors.ts` の Tailwind カラーと HEX 値が対応しているか確認（Tailwind の標準色を使用：green-600 = #16a34a など）
+- [ ] 定数名は大文字スネークケース（`TRANSACTION_TYPE_COLORS`）
+- [ ] `constants/index.ts` で再エクスポート
+
+### 型定義（types/）のルール
+
+```typescript
+// types/transaction.ts
+
+export type TransactionType = 'income' | 'expense';
+
+export interface Transaction {
+  id: string;
+  type: TransactionType;
+  date: string;      // YYYY-MM-DD
+  amount: number;
+  description: string;
+}
+
+export interface MonthlyTransactionData {
+  month: string;     // YYYY-MM
+  income: number;
+  expense: number;
+  balance: number;   // income - expense
+}
+```
+
+### 共通利用される値の統一化
+
+**プロジェクト全体で同じ値を使う場合は定数化：**
+
+```typescript
+// 悪い例
+<Typography className="text-green-600">収支</Typography>
+<Bar fill="#10b981" />  // 同じ緑色だが値が異なる
+
+// 良い例（定数化）
+import { TRANSACTION_TYPE_COLORS, TRANSACTION_TYPE_HEX_COLORS } from '@/constants';
+
+<Typography className={TRANSACTION_TYPE_COLORS.income}>
+  {TRANSACTION_TYPE_LABELS.income}
+</Typography>
+<Bar fill={TRANSACTION_TYPE_HEX_COLORS.income} />
+```
+
+---
+
+## 🎨 コンポーネント開発ガイドライン（追加）
+
+### レイアウトコンポーネントの使用ルール
+
+#### `InlineStack`（横並び）と`BlockStack`（縦積み）
+
+```typescript
+// InlineStack: alignItems のデフォルトは "center"
+// 上詰めにしたい場合は alignItems="flex-start" を明示
+
+// ❌ デフォルト（中央揃え）
+<InlineStack>
+  <aside className="..." />
+  {children}
+</InlineStack>
+
+// ✅ 上詰めする場合
+<InlineStack alignItems="flex-start">
+  <aside className="..." />
+  {children}
+</InlineStack>
+```
+
+### Grid レイアウトの標準化
+
+ダッシュボードの統計カード（3 列）など：
+
+```typescript
+// ✅ 推奨：標準 Tailwind グリッド
+<div className="w-full grid grid-cols-3 gap-4">
+  <Card>...</Card>
+  <Card>...</Card>
+  <Card>...</Card>
+</div>
+
+// ❌ 非推奨：カスタム クラス名
+<div className="w-full grid custom-grid-cols-3 gap-4">
+```
+
+### CSS 定数化のパターン
+
+複数箇所で同じ className が使われる場合：
+
+```typescript
+// テーブルセルの例
+const HEADER_CELL_STYLE = 'border-b border-gray-400 text-gray-700 font-medium px-4 py-2 text-left';
+const BODY_CELL_STYLE = 'border-b border-gray-200 px-4 py-2';
+
+<th className={HEADER_CELL_STYLE}>日付</th>
+<td className={BODY_CELL_STYLE}>...</td>
+```
+
+### Typography バリアント（拡張）
+
+`large` と `medium` バリアントを追加で使用可能：
+
+```typescript
+// Typography.tsx で定義済み
+// - large: text-2xl（太字なし）
+// - medium: text-base（太字なし）
+
+// 使用例
+<Typography variant="large">大きいテキスト</Typography>
+<Typography variant="medium">中くらいのテキスト</Typography>
+```
+
+---
+
+## 🔍 Dashboard コンポーネント開発例
+
+### コンポーネント構成
+
+```
+components/features/dashboard/
+├── Dashboard.tsx                # メインダッシュボード
+├── TrendCard.tsx               # 統計カード（収入・支出・収支）
+├── BalanceTrendChart.tsx       # 推移チャート（折れ線グラフ）
+├── MonthlyBalanceChart.tsx     # 月別比較チャート（棒グラフ）
+├── RecentTransactionList.tsx   # 最近の取引一覧
+└── TransactionTypeIcon.tsx     # 取引タイプアイコン（Badge）
+```
+
+### ダッシュボード開発時のパターン
+
+#### 1. データ型定義
+
+```typescript
+// types/transaction.ts
+export interface Transaction {
+  id: string;
+  type: 'income' | 'expense';
+  date: string;
+  amount: number;
+  description: string;
+}
+```
+
+#### 2. 定数定義
+
+```typescript
+// constants/transaction.ts
+export const TRANSACTION_TYPE_COLORS = { ... };
+export const TRANSACTION_TYPE_HEX_COLORS = { ... };
+```
+
+#### 3. 機能コンポーネント
+
+```typescript
+// components/features/dashboard/Dashboard.tsx
+import { TrendCard } from './TrendCard';
+import { BalanceTrendChart } from './BalanceTrendChart';
+
+export const Dashboard = () => {
+  const transactions = [...];  // API から取得
+  
+  return (
+    <div>
+      <div className="grid grid-cols-3 gap-4">
+        <TrendCard type="trending-up" amount={...} />
+        <TrendCard type="trending-down" amount={...} />
+        <TrendCard type="wallet" amount={...} />
+      </div>
+      <BalanceTrendChart transactions={transactions} />
+    </div>
+  );
+};
+```
+
+### Typography 使用時の注意
+
+金額表示など数値の 3 桁区切りが必要な場合：
+
+```typescript
+// ✅ 推奨
+<Typography variant="large">
+  ¥{Number(amount).toLocaleString()}
+</Typography>
+
+// ❌ 非推奨
+<Typography variant="large">
+  ¥{amount}
+</Typography>
+```
+
+---
+
+## 🔧 Button コンポーネント拡張ガイド
+
+### variant プロパティの追加
+
+Button コンポーネントに `variant` プロパティを追加して、背景色有無を制御：
+
+```typescript
+interface ButtonProps {
+  variant?: 'solid' | 'outline';  // デフォルト: 'solid'
+  color?: ButtonColorKey;
+  // ...
+}
+```
+
+#### outline バリアント
+
+枠線のみで背景色なしの表示：
+
+```typescript
+// ✅ 推奨：outline バリアントを使用
+<Button variant="outline" color="primary">
+  外枠ボタン
+</Button>
+
+// outline 時の色設定
+const outlineColorMap = {
+  primary: { border: 'border-blue-600', text: 'text-blue-600', hover: 'hover:bg-blue-50' },
+  secondary: { border: 'border-blue-100', text: 'text-gray-900', hover: 'hover:bg-blue-50' },
+  // ...
+} as const;
+```
