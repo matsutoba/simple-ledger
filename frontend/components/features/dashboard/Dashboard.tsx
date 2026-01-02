@@ -19,7 +19,7 @@ export const Dashboard: React.FC = () => {
       <InlineStack alignItems="center" justifyContent="flex-end">
         <Button color="primary">取引を追加</Button>
       </InlineStack>
-      <div className="w-full grid grid-cols-3 gap-2">
+      <div className="w-full grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         <TrendCard amount={750000} type="income" />
         <TrendCard amount={38500} type="expense" />
         <TrendCard amount={711500} type="balance" />
