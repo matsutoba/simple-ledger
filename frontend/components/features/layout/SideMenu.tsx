@@ -29,7 +29,7 @@ export const SideMenu: React.FC = () => {
     <ul className="flex h-full flex-col">
       {menuItems.map((item, index) => (
         <li
-          key={index}
+          key={item.href}
           className={`rounded hover:${commonColors.gray100} ${index === selectedMenuItemIndex ? keyColors.primary.secondary : ''} p-2 mb-1`}
         >
           <Link href={item.href} className="flex items-center gap-2">
