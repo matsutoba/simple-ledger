@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input } from '@/components/shadcn/ui/input';
 import { Icon } from '@/components/ui/Icon';
+import { formControlColors } from '@/theme/colors';
 
 type IconName =
   | 'lock'
@@ -36,8 +37,19 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
     const isIconName = typeof icon === 'string';
     const hasIcon = !!icon;
 
-    const defaultClassName =
-      'w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all';
+    const defaultClassName = [
+      'w-full',
+      'pl-10',
+      'pr-4',
+      'py-3',
+      'border',
+      formControlColors.border,
+      'rounded-lg',
+      formControlColors.focusRing,
+      formControlColors.focusBorder,
+      'outline-none',
+      'transition-all',
+    ].join(' ');
     const inputClassName = className
       ? `${defaultClassName} ${className}`
       : defaultClassName;
@@ -45,7 +57,10 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
     return (
       <div className="space-y-2">
         {label && (
-          <label htmlFor={props.id} className="block text-sm text-gray-700">
+          <label
+            htmlFor={props.id}
+            className={`block text-sm ${formControlColors.label}`}
+          >
             {label}
           </label>
         )}
@@ -56,7 +71,7 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
                 <Icon
                   name={icon as IconName}
                   size={20}
-                  className="text-gray-400"
+                  className={formControlColors.icon}
                 />
               ) : (
                 <>{icon}</>
@@ -76,7 +91,7 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
                 <Icon
                   name={icon as IconName}
                   size={20}
-                  className="text-gray-400"
+                  className={formControlColors.icon}
                 />
               ) : (
                 <>{icon}</>
@@ -84,7 +99,9 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
             </div>
           )}
         </div>
-        {errorMessage && <p className="text-red-600 text-sm">{errorMessage}</p>}
+        {errorMessage && (
+          <p className={`${formControlColors.error} text-sm`}>{errorMessage}</p>
+        )}
       </div>
     );
   },

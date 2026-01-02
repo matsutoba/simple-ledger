@@ -14,7 +14,11 @@ const menuItems: { icon: IconName; label: string; href: string }[] = [
   { icon: 'settings', label: '設定', href: '/settings' },
 ];
 
-export const SideMenu: React.FC = () => {
+interface SideMenuProps {
+  onNavigate?: () => void;
+}
+
+export const SideMenu: React.FC<SideMenuProps> = ({ onNavigate }) => {
   const pathname = usePathname();
 
   // 現在のパスに基づいて選択されたメニュー項目のインデックスを取得
@@ -29,10 +33,14 @@ export const SideMenu: React.FC = () => {
     <ul className="flex h-full flex-col">
       {menuItems.map((item, index) => (
         <li
-          key={index}
+          key={item.href}
           className={`rounded hover:${commonColors.gray100} ${index === selectedMenuItemIndex ? keyColors.primary.secondary : ''} p-2 mb-1`}
         >
-          <Link href={item.href} className="flex items-center gap-2">
+          <Link
+            href={item.href}
+            className="flex items-center gap-2"
+            onClick={onNavigate}
+          >
             <Icon name={item.icon} className="size-4" />
             <Typography as="span">{item.label}</Typography>
           </Link>

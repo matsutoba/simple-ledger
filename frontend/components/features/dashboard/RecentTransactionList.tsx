@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/Card';
+import { cn } from '@/components/shadcn/ui/utils';
 import { BlockStack } from '@/components/ui/Stack';
 import { Typography } from '@/components/ui/Typography';
 import { Transaction, TransactionType } from '@/types/transaction';
@@ -32,27 +33,23 @@ export const RecentTransactionList: React.FC<RecentTransactionListProps> = ({
         <Typography>最近の取引</Typography>
         <div className="overflow-x-auto">
           <table className="w-full table-auto border-collapse">
-            <thead>
-              <tr>
-                <th className={`${HEADER_CELL_STYLE}`}>日付</th>
-                <th className={`${HEADER_CELL_STYLE}`}>カテゴリ</th>
-                <th className={`${HEADER_CELL_STYLE}`}>説明</th>
-                <th className={`${HEADER_CELL_STYLE} text-right`}>金額</th>
-              </tr>
-            </thead>
             <tbody>
-              {recentTransactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-gray-50">
+              {recentTransactions.map((tx, index) => (
+                <tr
+                  key={tx.id}
+                  className={cn(
+                    'hover:bg-gray-50',
+                    index === 0 && 'border-t border-gray-200',
+                  )}
+                >
                   <td className={BODY_CELL_STYLE}>
-                    <Typography>
+                    <div className="flex items-center gap-2 mb-1">
+                      <TransactionTypeIcon type={tx.type} />
+                      <Typography>{tx.description}</Typography>
+                    </div>
+                    <Typography className="text-sm text-gray-500">
                       {new Date(tx.date).toLocaleDateString()}
                     </Typography>
-                  </td>
-                  <td className={BODY_CELL_STYLE}>
-                    <TransactionTypeIcon type={tx.type} />
-                  </td>
-                  <td className={BODY_CELL_STYLE}>
-                    <Typography>{tx.description}</Typography>
                   </td>
                   <td className={BODY_CELL_STYLE}>
                     <Typography
