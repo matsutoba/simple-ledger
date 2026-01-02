@@ -59,6 +59,7 @@ export const RecentTransactionList: React.FC<RecentTransactionListProps> = ({
                       className={getTransactionColor(tx.type)}
                       align="right"
                     >
+                      {tx.type === 'expense' ? '-' : '+'}
                       {tx.amount.toLocaleString()} 円
                     </Typography>
                   </td>
