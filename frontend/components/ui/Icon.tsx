@@ -18,9 +18,12 @@ import {
   Home,
   AlertCircle,
   Info,
+  DollarSign,
+  BarChart3,
+  Users,
 } from 'lucide-react';
 
-type IconName =
+export type IconName =
   | 'lock'
   | 'mail'
   | 'eye'
@@ -41,7 +44,10 @@ type IconName =
   | 'check-circle'
   | 'x-circle'
   | 'alert-circle'
-  | 'info';
+  | 'info'
+  | 'dollar-sign'
+  | 'bar-chart-3'
+  | 'users';
 
 type LucideIcon = React.ComponentType<{ size?: number; className?: string }>;
 
@@ -67,6 +73,9 @@ const iconMap: Record<IconName, LucideIcon> = {
   'x-circle': X,
   'alert-circle': AlertCircle,
   info: Info,
+  'dollar-sign': DollarSign,
+  'bar-chart-3': BarChart3,
+  users: Users,
 };
 
 interface IconProps {
