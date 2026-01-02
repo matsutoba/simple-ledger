@@ -48,7 +48,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         outlineConfig.border,
         outlineConfig.text,
         outlineConfig.hover,
-        'transition-colors cursor-pointer',
+        'transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
         className,
       );
     } else {
@@ -59,7 +59,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         widthClass,
         bgClass,
         textClass,
-        'hover:opacity-90 transition-opacity cursor-pointer',
+        'hover:opacity-90 transition-opacity cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
         className,
       );
     }
