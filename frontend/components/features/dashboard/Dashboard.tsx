@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/Button';
 import { BlockStack, InlineStack } from '@/components/ui/Stack';
 import { TrendCard } from './TrendCard';
-import { BlanceTrendChart } from './BalanceTrendChart';
+import { BalanceTrendChart } from './BalanceTrendChart';
 import { useState } from 'react';
 import { Transaction } from '@/types/transaction';
 import { transactionData } from './testdata';
@@ -24,7 +24,7 @@ export const Dashboard: React.FC = () => {
         <TrendCard amount={38500} type="expense" />
         <TrendCard amount={711500} type="balance" />
       </div>
-      <BlanceTrendChart transactions={transactions} />
+      <BalanceTrendChart transactions={transactions} />
       <MonthlyBalanceChart transactions={transactions} />
       <RecentTransactionList transactions={transactions} />
     </BlockStack>

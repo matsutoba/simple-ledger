@@ -15,11 +15,11 @@ import {
   YAxis,
 } from 'recharts';
 
-interface BlanceTrendChartProps {
+interface BalanceTrendChartProps {
   transactions: Transaction[];
 }
 
-export const BlanceTrendChart: React.FC<BlanceTrendChartProps> = ({
+export const BalanceTrendChart: React.FC<BalanceTrendChartProps> = ({
   transactions,
 }) => {
   const chartData = useMemo(() => {
