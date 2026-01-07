@@ -2,11 +2,14 @@ FROM node:25-alpine
 
 WORKDIR /app
 
-# package.json と package-lock.json をコピー
-COPY package*.json ./
+# pnpmをインストール
+RUN npm install -g pnpm
+
+# package.json と pnpm-lock.yaml をコピー
+COPY package.json pnpm-lock.yaml ./
 
 # 依存関係をインストール
-RUN npm install
+RUN pnpm install --frozen-lockfile
 
 # アプリケーションコードをコピー
 COPY . .
