@@ -9,3 +9,5 @@ export interface Transaction {
   amount: number;
   type: TransactionType;
 }
+
+export type TransactionFilterCategory = TransactionType | 'all';
