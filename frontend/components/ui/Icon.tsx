@@ -24,6 +24,7 @@ import {
   TrendingUp,
   TrendingDown,
   Wallet,
+  Funnel,
 } from 'lucide-react';
 
 export type IconName =
@@ -53,7 +54,8 @@ export type IconName =
   | 'users'
   | 'trending-up'
   | 'trending-down'
-  | 'wallet';
+  | 'wallet'
+  | 'funnel';
 
 type LucideIcon = React.ComponentType<{ size?: number; className?: string }>;
 
@@ -85,6 +87,7 @@ const iconMap: Record<IconName, LucideIcon> = {
   'trending-up': TrendingUp,
   'trending-down': TrendingDown,
   wallet: Wallet,
+  funnel: Funnel,
 };
 
 interface IconProps {
