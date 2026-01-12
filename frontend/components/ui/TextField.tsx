@@ -20,7 +20,8 @@ type IconName =
   | 'chevronDown'
   | 'chevronUp'
   | 'arrowRight'
-  | 'home';
+  | 'home'
+  | 'search';
 
 interface TextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
