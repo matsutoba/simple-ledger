@@ -20,7 +20,7 @@ export const Tranasctions: React.FC = () => {
   return (
     <BlockStack gap="lg">
       <InlineStack alignItems="center" justifyContent="space-between">
-        <Typography variant="medium">取引一覧</Typography>
+        <Typography variant="2xl">取引一覧</Typography>
         <Button color="primary">取引を追加</Button>
       </InlineStack>
       <TransactionFilterBar

@@ -48,7 +48,7 @@ export const Analytics: React.FC = () => {
 
   return (
     <BlockStack gap="lg">
-      <Typography variant="medium">分析・レポート</Typography>
+      <Typography variant="2xl">分析・レポート</Typography>
       <div className="w-full grid grid-cols-4 gap-4">
         <CountCard count={transactions.length} />
         <AmountCard amount={1200000} type="income" />
