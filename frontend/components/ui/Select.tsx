@@ -29,6 +29,7 @@ interface SelectProps extends React.ComponentProps<typeof ShadcnSelect> {
   groups?: SelectGroupType[];
   errorMessage?: string;
   disabled?: boolean;
+  onChange?: (value: string) => void;
 }
 
 const SelectItem = React.forwardRef<
@@ -58,10 +59,7 @@ const SelectContent = React.forwardRef<
 ));
 SelectContent.displayName = 'SelectContent';
 
-export const Select = React.forwardRef<
-  React.ElementRef<typeof ShadcnSelect>,
-  SelectProps
->(
+export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
   (
     {
       label,
@@ -70,24 +68,24 @@ export const Select = React.forwardRef<
       groups,
       errorMessage,
       disabled,
+      onChange,
       ...props
     },
     ref,
   ) => {
     return (
-      <div className="w-full space-y-2">
+      <div ref={ref} className="w-full space-y-2">
         {label && (
           <Typography variant="caption" color="secondary" className="block">
             {label}
           </Typography>
         )}
-        <ShadcnSelect disabled={disabled} {...props}>
+        <ShadcnSelect disabled={disabled} onValueChange={onChange} {...props}>
           <SelectTrigger
             className={cn(
               formControlColors.border,
               formControlColors.focusRing,
               formControlColors.focusBorder,
-              errorMessage && formControlColors.errorBorder,
               disabled && 'opacity-50 cursor-not-allowed',
             )}
           >
