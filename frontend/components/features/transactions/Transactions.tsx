@@ -8,7 +8,8 @@ import { Typography } from '@/components/ui/Typography';
 import { transactionData } from '../dashboard/testdata';
 import { TransactionList } from './TransactionList';
 import { TransactionFilterBar } from './TransactionFilterBar';
-import { AmountCard } from './AmountCard';
+import { AmountCard } from '../common/AmountCard';
+import { Icon } from '@/components/ui/Icon';
 
 export const Tranasctions: React.FC = () => {
   const [transactions, setTransactions] =
@@ -20,8 +21,11 @@ export const Tranasctions: React.FC = () => {
   return (
     <BlockStack gap="lg">
       <InlineStack alignItems="center" justifyContent="space-between">
-        <Typography variant="medium">取引一覧</Typography>
-        <Button color="primary">取引を追加</Button>
+        <Typography variant="2xl">取引一覧</Typography>
+        <Button color="primary">
+          <Icon name="plus" />
+          取引を追加
+        </Button>
       </InlineStack>
       <TransactionFilterBar
         searchValue={searchValue}

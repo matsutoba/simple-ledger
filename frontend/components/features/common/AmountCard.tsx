@@ -48,9 +48,9 @@ export const AmountCard: React.FC<TrendCardProps> = ({ type, amount }) => {
   return (
     <Card padding="md">
       <InlineStack justifyContent="space-between" alignItems="center">
-        <Typography>{config.title}</Typography>
+        <Typography variant="large">{config.title}</Typography>
       </InlineStack>
-      <Typography variant="h4" className={`mt-2 ${config.color}`}>
+      <Typography variant="xl" className={`mt-2 ${config.color}`} bold>
         {Number(amount).toLocaleString()} 円
       </Typography>
     </Card>
