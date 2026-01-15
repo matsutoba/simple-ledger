@@ -8,7 +8,7 @@ import { Typography } from '@/components/ui/Typography';
 import { transactionData } from '../dashboard/testdata';
 import { TransactionList } from './TransactionList';
 import { TransactionFilterBar } from './TransactionFilterBar';
-import { AmountCard } from './AmountCard';
+import { AmountCard } from '../common/AmountCard';
 
 export const Tranasctions: React.FC = () => {
   const [transactions, setTransactions] =
