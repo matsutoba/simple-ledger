@@ -11,3 +11,13 @@ export interface Transaction {
 }
 
 export type TransactionFilterCategory = TransactionType | 'all';
+
+export interface TransactionCategoryDataItem {
+  name: string;
+  value: number;
+}
+
+export interface TransactionCategoryData {
+  incomeData: TransactionCategoryDataItem[];
+  expenseData: TransactionCategoryDataItem[];
+}
