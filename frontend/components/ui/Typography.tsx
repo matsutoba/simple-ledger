@@ -5,13 +5,15 @@ type TypographyVariant =
   | 'h2'
   | 'h3'
   | 'h4'
-  | 'p'
+  | '2xl'
+  | 'xl'
+  | 'large'
+  | 'medium'
   | 'small'
   | 'xs'
+  | 'p'
   | 'muted'
-  | 'caption'
-  | 'large'
-  | 'medium';
+  | 'caption';
 
 type TypographyColor =
   | 'default'
@@ -26,6 +28,7 @@ interface TypographyProps {
   variant?: TypographyVariant;
   color?: TypographyColor;
   align?: TextAlign;
+  bold?: boolean;
   as?: ElementType;
   className?: string;
   children: ReactNode;
@@ -36,13 +39,15 @@ const variantStyles: Record<TypographyVariant, string> = {
   h2: 'text-3xl font-semibold tracking-tight',
   h3: 'text-2xl font-semibold tracking-tight',
   h4: 'text-xl font-semibold',
-  p: 'text-base',
+  '2xl': 'text-2xl',
+  xl: 'text-xl',
+  large: 'text-lg',
+  medium: 'text-base',
   small: 'text-sm',
   xs: 'text-xs',
+  p: 'text-base',
   muted: 'text-sm',
   caption: 'text-xs',
-  large: 'text-3xl',
-  medium: 'text-base',
 };
 
 const colorStyles: Record<TypographyColor, string> = {
@@ -64,6 +69,7 @@ export const Typography = ({
   variant = 'p',
   color = 'default',
   align = 'left',
+  bold = false,
   as,
   className = '',
   children,
@@ -76,7 +82,8 @@ export const Typography = ({
     variant === 'h4'
       ? variant
       : 'p');
-  const baseStyles = `${variantStyles[variant]} ${colorStyles[color]} ${alignStyles[align]}`;
+  const boldStyle = bold ? 'font-bold' : '';
+  const baseStyles = `${variantStyles[variant]} ${colorStyles[color]} ${alignStyles[align]} ${boldStyle}`;
   const combinedClassName = `${baseStyles} ${className}`.trim();
 
   return <Element className={combinedClassName}>{children}</Element>;
