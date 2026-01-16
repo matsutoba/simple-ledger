@@ -149,7 +149,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         />
 
         <Select
-          label="カテゴリ"
+          label="勘定科目"
           placeholder="選択してください"
           options={type === 'income' ? incomeCategories : expenseCategories}
           value={category}
