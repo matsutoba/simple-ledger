@@ -63,9 +63,23 @@ func TestLogin_Success(t *testing.T) {
 
 	var response dto.LoginResponse
 	_ = json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NotEmpty(t, response.AccessToken)
-	assert.NotEmpty(t, response.RefreshToken)
+	// トークンはHttpOnly Cookieに設定されるため、レスポンスには含まれない
 	assert.Equal(t, security.GetTokenExpirationSeconds(), response.ExpiresIn)
+
+	// Cookieが設定されているか確認
+	cookies := w.Result().Cookies()
+	assert.NotEmpty(t, cookies)
+	var accessTokenFound, refreshTokenFound bool
+	for _, cookie := range cookies {
+		if cookie.Name == "accessToken" && cookie.Value != "" {
+			accessTokenFound = true
+		}
+		if cookie.Name == "refreshToken" && cookie.Value != "" {
+			refreshTokenFound = true
+		}
+	}
+	assert.True(t, accessTokenFound, "accessToken cookie should be set")
+	assert.True(t, refreshTokenFound, "refreshToken cookie should be set")
 }
 
 func TestLogin_InvalidEmail(t *testing.T) {
