@@ -42,7 +42,7 @@ func SeedTransactions(db *gorm.DB) {
 
 	// テストデータ作成
 	transactions := []models.Transaction{}
-	rand.Seed(time.Now().UnixNano())
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	// 各ユーザーの取引データを生成
 	for _, user := range users {
@@ -63,11 +63,11 @@ func SeedTransactions(db *gorm.DB) {
 		currentDate := startDate
 		for currentDate.Before(endDate) {
 			// 1日あたりの取引件数をランダムに決定（0-3件）
-			numTransactions := rand.Intn(4)
+			numTransactions := rng.Intn(4)
 
 			for i := 0; i < numTransactions; i++ {
 				// ランダムに勘定科目タイプを選択
-				accountType := accountTypes[rand.Intn(len(accountTypes))]
+				accountType := accountTypes[rng.Intn(len(accountTypes))]
 
 				// 選択されたタイプの勘定科目を取得
 				typeAccounts := accountsByType[accountType]
@@ -75,10 +75,10 @@ func SeedTransactions(db *gorm.DB) {
 					continue
 				}
 
-				account := typeAccounts[rand.Intn(len(typeAccounts))]
+				account := typeAccounts[rng.Intn(len(typeAccounts))]
 
 				// 100円から300,000円までのランダムな金額
-				amount := 100 + rand.Intn(300000-100+1)
+				amount := 100 + rng.Intn(300000-100+1)
 
 				transaction := models.Transaction{
 					UserID:            user.ID,
