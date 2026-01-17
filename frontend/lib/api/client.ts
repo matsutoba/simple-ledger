@@ -135,7 +135,6 @@ class ApiClient {
    * サーバー側でクッキーを無効化
    */
   async logout(): Promise<void> {
-    // ログアウトエンドポイント（実装が必要）
     await this.post('/api/auth/logout', {});
   }
 }
