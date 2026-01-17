@@ -162,6 +162,7 @@ func (s *transactionService) transactionToResponse(transaction *models.Transacti
 	if transaction.ChartOfAccounts != nil {
 		response.ChartOfAccountsCode = transaction.ChartOfAccounts.Code
 		response.ChartOfAccountsName = transaction.ChartOfAccounts.Name
+		response.ChartOfAccountsType = string(transaction.ChartOfAccounts.Type)
 	}
 
 	return response
