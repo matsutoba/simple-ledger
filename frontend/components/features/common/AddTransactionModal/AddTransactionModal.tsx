@@ -12,6 +12,8 @@ import { z } from 'zod';
 import { transactionSchema } from './transaction_schema';
 import { SelectChartOfAccounts } from './SelectChartOfAccounts';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { useCreateTransaction } from '@/hooks/useTransactions';
+import { Spinner } from '@/components/ui/Spinner';
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
@@ -26,6 +28,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   onClose,
   onExecute,
 }) => {
+  const { mutate, isPending } = useCreateTransaction();
   const [type, setType] = useState<TransactionType>('expense');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [category, setCategory] = useState('');
@@ -88,14 +91,26 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     // バリデーション成功時
     setErrors({});
 
-    // ここで取引データを保存するロジックを実装
-    // 例: API呼び出しや状態管理ライブラリの更新など
-
-    // フォームをリセット
-    resetForm();
-
-    // モーダルを閉じる
-    onExecute();
+    // 取引データを保存
+    mutate(
+      {
+        date,
+        chartOfAccountsId: parseInt(category, 10),
+        amount: parseInt(amount, 10),
+        description,
+      } as const satisfies Parameters<typeof mutate>[0],
+      {
+        onSuccess: () => {
+          // フォームをリセット
+          resetForm();
+          // モーダルを閉じる
+          onExecute();
+        },
+        onError: (error: unknown) => {
+          console.error('取引の作成に失敗しました:', error);
+        },
+      },
+    );
   };
 
   return (
@@ -110,10 +125,13 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           <Button onClick={handleClose} variant="outline">
             キャンセル
           </Button>
-          <Button onClick={handleSubmit}>保存</Button>
+          <Button onClick={handleSubmit} disabled={isPending}>
+            保存
+          </Button>
         </div>
       }
     >
+      {isPending && <Spinner fullscreen label="保存中..." />}
       <form onSubmit={handleSubmit} className="space-y-4">
         <BlockStack gap="sm">
           <Typography variant="small">種別</Typography>
