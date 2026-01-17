@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Typography } from '@/components/ui/Typography';
+import { apiClient } from '@/lib/api/client';
+import { useRouter } from 'next/navigation';
 
 interface HeaderProps {
   onMenuToggle?: () => void;
@@ -12,6 +14,18 @@ interface HeaderProps {
  * 今後、ナビゲーションバーやサイドバーを追加
  */
 export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await apiClient.logout();
+      // ログアウト成功後、ログインページにリダイレクト
+      router.push('/login');
+    } catch (error) {
+      console.error('ログアウトに失敗しました:', error);
+    }
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 h-12">
       <div className="px-4 py-2 flex items-center justify-between">
@@ -31,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
           color="secondary"
           size="sm"
           variant="outline"
-          onClick={() => {}}
+          onClick={handleLogout}
         >
           <Icon name="logout" />
           <span className="hidden sm:inline">ログアウト</span>

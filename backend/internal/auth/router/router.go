@@ -20,5 +20,6 @@ func SetupAuthRoutes(r *gin.RouterGroup, db *gorm.DB) {
 	{
 		authGroup.POST("/login", authCtrl.Login)          // POST /api/auth/login
 		authGroup.POST("/refresh", authCtrl.RefreshToken) // POST /api/auth/refresh
+		authGroup.POST("/logout", authCtrl.Logout)        // POST /api/auth/logout
 	}
 }

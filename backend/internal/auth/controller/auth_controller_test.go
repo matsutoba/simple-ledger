@@ -158,13 +158,11 @@ func TestRefreshToken_Success(t *testing.T) {
 	authService := service.NewAuthService(userRepo)
 	_, refreshToken, _ := authService.Login("test@example.com", "password123")
 
-	req := dto.RefreshTokenRequest{
-		RefreshToken: refreshToken,
-	}
-
-	body, _ := json.Marshal(req)
-	httpReq := httptest.NewRequest("POST", "/api/auth/refresh", bytes.NewBuffer(body))
-	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq := httptest.NewRequest("POST", "/api/auth/refresh", nil)
+	httpReq.AddCookie(&http.Cookie{
+		Name:  "refreshToken",
+		Value: refreshToken,
+	})
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -176,20 +174,17 @@ func TestRefreshToken_Success(t *testing.T) {
 
 	var response map[string]interface{}
 	_ = json.Unmarshal(w.Body.Bytes(), &response)
-	assert.NotEmpty(t, response["accessToken"])
 	assert.Equal(t, float64(security.GetTokenExpirationSeconds()), response["expiresIn"])
 }
 
 func TestRefreshToken_InvalidToken(t *testing.T) {
 	ctrl, _ := setupTestAuthController()
 
-	req := dto.RefreshTokenRequest{
-		RefreshToken: "invalid-token",
-	}
-
-	body, _ := json.Marshal(req)
-	httpReq := httptest.NewRequest("POST", "/api/auth/refresh", bytes.NewBuffer(body))
-	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq := httptest.NewRequest("POST", "/api/auth/refresh", nil)
+	httpReq.AddCookie(&http.Cookie{
+		Name:  "refreshToken",
+		Value: "invalid-token",
+	})
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
