@@ -1,0 +1,99 @@
+package repository
+
+import (
+	"simple-ledger/internal/models"
+	"time"
+
+	"gorm.io/gorm"
+)
+
+// TransactionRepository: 取引リポジトリ
+type TransactionRepository struct {
+	db *gorm.DB
+}
+
+// NewTransactionRepository: 取引リポジトリの生成
+func NewTransactionRepository(db *gorm.DB) *TransactionRepository {
+	return &TransactionRepository{db: db}
+}
+
+// Create: 取引を作成
+func (r *TransactionRepository) Create(transaction *models.Transaction) error {
+	return r.db.Create(transaction).Error
+}
+
+// GetByID: IDで取引を取得
+func (r *TransactionRepository) GetByID(id uint) (*models.Transaction, error) {
+	var transaction models.Transaction
+	if err := r.db.
+		Preload("ChartOfAccounts").
+		Preload("User").
+		Where("id = ?", id).
+		First(&transaction).Error; err != nil {
+		return nil, err
+	}
+	return &transaction, nil
+}
+
+// GetByUserID: ユーザーIDで取引一覧を取得
+func (r *TransactionRepository) GetByUserID(userID uint) ([]models.Transaction, error) {
+	var transactions []models.Transaction
+	if err := r.db.
+		Preload("ChartOfAccounts").
+		Where("user_id = ?", userID).
+		Order("date DESC").
+		Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+	return transactions, nil
+}
+
+// GetByUserIDAndDateRange: ユーザーIDと期間で取引一覧を取得
+func (r *TransactionRepository) GetByUserIDAndDateRange(
+	userID uint,
+	startDate time.Time,
+	endDate time.Time,
+) ([]models.Transaction, error) {
+	var transactions []models.Transaction
+	if err := r.db.
+		Preload("ChartOfAccounts").
+		Where("user_id = ? AND date BETWEEN ? AND ?", userID, startDate, endDate).
+		Order("date DESC").
+		Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+	return transactions, nil
+}
+
+// GetByUserIDAndChartOfAccountsID: ユーザーIDと勘定科目IDで取引一覧を取得
+func (r *TransactionRepository) GetByUserIDAndChartOfAccountsID(
+	userID uint,
+	chartOfAccountsID uint,
+) ([]models.Transaction, error) {
+	var transactions []models.Transaction
+	if err := r.db.
+		Preload("ChartOfAccounts").
+		Where("user_id = ? AND chart_of_accounts_id = ?", userID, chartOfAccountsID).
+		Order("date DESC").
+		Find(&transactions).Error; err != nil {
+		return nil, err
+	}
+	return transactions, nil
+}
+
+// Update: 取引を更新
+func (r *TransactionRepository) Update(transaction *models.Transaction) error {
+	return r.db.Save(transaction).Error
+}
+
+// Delete: 取引を削除
+func (r *TransactionRepository) Delete(id uint) error {
+	return r.db.Where("id = ?", id).Delete(&models.Transaction{}).Error
+}
+
+// DeleteByUserIDAndID: ユーザーIDと取引IDで削除（権限確認用）
+func (r *TransactionRepository) DeleteByUserIDAndID(userID uint, transactionID uint) error {
+	return r.db.
+		Where("id = ? AND user_id = ?", transactionID, userID).
+		Delete(&models.Transaction{}).Error
+}

@@ -235,3 +235,55 @@ export const rounded = {
 } as const;
 
 export type RoundedKey = keyof typeof rounded;
+
+// Toast カラー定義 - Sonner トースト用の 16 進数カラー
+export const toastColors = {
+  light: {
+    normal: {
+      bg: '#ffffff',
+      text: '#171717',
+      border: '#e5e7eb',
+    },
+    success: {
+      bg: '#f0fdf4',
+      text: '#166534',
+    },
+    error: {
+      bg: '#fef2f2',
+      text: '#991b1b',
+    },
+    warning: {
+      bg: '#fef3c7',
+      text: '#92400e',
+    },
+    info: {
+      bg: '#f0f9ff',
+      text: '#0c2d6b',
+    },
+  },
+  dark: {
+    normal: {
+      bg: '#0a0a0a',
+      text: '#ededed',
+      border: '#404040',
+    },
+    success: {
+      bg: '#164e63',
+      text: '#86efac',
+    },
+    error: {
+      bg: '#7f1d1d',
+      text: '#fecaca',
+    },
+    warning: {
+      bg: '#78350f',
+      text: '#fcd34d',
+    },
+    info: {
+      bg: '#0f2347',
+      text: '#93c5fd',
+    },
+  },
+} as const;
+
+export type ToastColorType = keyof typeof toastColors.light;
