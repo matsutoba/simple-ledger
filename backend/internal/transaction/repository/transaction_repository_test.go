@@ -13,9 +13,15 @@ import (
 
 func setupTransactionTestDB() *gorm.DB {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	db.AutoMigrate(&models.User{})
-	db.AutoMigrate(&models.ChartOfAccounts{})
-	db.AutoMigrate(&models.Transaction{})
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		panic(err)
+	}
+	if err := db.AutoMigrate(&models.ChartOfAccounts{}); err != nil {
+		panic(err)
+	}
+	if err := db.AutoMigrate(&models.Transaction{}); err != nil {
+		panic(err)
+	}
 
 	// テストデータの作成
 	user := models.User{
