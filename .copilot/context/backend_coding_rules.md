@@ -261,23 +261,98 @@ internal/auth/
 
 ### Controller 層パターン
 
-- POST `/api/auth/login` - HTTP 200、LoginResponse 返却（accessToken, refreshToken, expiresIn）
-- POST `/api/auth/refresh` - HTTP 200、新しい accessToken 返却
+- POST `/api/auth/login` - HTTP 200、LoginResponse 返却（expiresIn のみ、トークンはクッキーに設定）
+- POST `/api/auth/refresh` - HTTP 200、新しい accessToken をクッキーに設定
 - エラーは HTTP 401 (Unauthorized) で返す
+
+#### ログインエンドポイントの実装例
+
+```go
+func (c *AuthController) Login(ctx *gin.Context) {
+  var req dto.LoginRequest
+  if err := ctx.ShouldBindJSON(&req); err != nil {
+    ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+    return
+  }
+
+  accessToken, refreshToken, err := c.service.Login(req.Email, req.Password)
+  if err != nil {
+    ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+    return
+  }
+
+  // HttpOnly Cookie にトークンを設定（XSS攻撃対策）
+  ctx.SetCookie(
+    "accessToken",
+    accessToken,
+    int(security.GetTokenExpirationSeconds()),
+    "/",
+    ctx.Request.Host,
+    false,       // Secure: 開発環境では false（本番環境では true にすること）
+    true,        // HttpOnly: JavaScript からアクセス不可
+  )
+
+  ctx.SetCookie(
+    "refreshToken",
+    refreshToken,
+    int(security.GetRefreshTokenExpirationSeconds()),
+    "/",
+    ctx.Request.Host,
+    false,
+    true,
+  )
+
+  // クライアントに成功を通知（トークン値は含めない）
+  response := dto.LoginResponse{
+    ExpiresIn: security.GetTokenExpirationSeconds(),
+  }
+
+  ctx.JSON(http.StatusOK, response)
+}
+```
 
 ### Middleware パターン
 
-- `Authorization: Bearer <token>` ヘッダーを検証
+- クッキーからトークンを取得
 - `VerifyToken()` で署名検証と有効期限チェック
 - クレーム情報を gin.Context に格納（`ctx.Set("userID", claims.UserID)`）
 - 無効なトークンは HTTP 401 で拒否
 
-### トークン管理
+#### 実装例
 
-- トークンはクライアント側で保持（localStorage、cookie など）
-- サーバーはトークン検証時に署名のみチェック
-- データベースにはトークン保存なし（ステートレス設計）
-- ログアウト機能は必要に応じてトークンブラックリスト実装可
+```go
+func AuthMiddleware() gin.HandlerFunc {
+  return func(c *gin.Context) {
+    // クッキーからアクセストークンを取得
+    tokenString, err := c.Cookie("accessToken")
+    if err != nil {
+      c.JSON(http.StatusUnauthorized, gin.H{"error": "token not found"})
+      c.Abort()
+      return
+    }
+
+    // トークン検証
+    claims, err := security.VerifyToken(tokenString)
+    if err != nil {
+      c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+      c.Abort()
+      return
+    }
+
+    // クレーム情報を context に格納
+    c.Set("userID", claims.UserID)
+    c.Next()
+  }
+}
+```
+
+### トークン管理（HttpOnly Cookie ベース）
+
+- **トークン保存**: サーバーが HttpOnly Cookie に自動設定（JavaScript からアクセス不可）
+- **トークン送信**: ブラウザが自動的にクッキーをリクエストに含める
+- **セキュリティ**: XSS 攻撃に耐性がある
+- **スケーラビリティ**: ステートレス JWT なので複数サーバーに対応
+- **ログアウト**: クッキーを max-age=0 で削除（または新しい実装が必要）
 
 ---
 
