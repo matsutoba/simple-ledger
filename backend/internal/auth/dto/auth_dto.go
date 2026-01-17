@@ -11,8 +11,3 @@ type LoginRequest struct {
 type LoginResponse struct {
 	ExpiresIn int `json:"expiresIn"` // 秒単位
 }
-
-// RefreshTokenRequest はトークン更新リクエスト
-type RefreshTokenRequest struct {
-	RefreshToken string `json:"refreshToken" binding:"required"`
-}

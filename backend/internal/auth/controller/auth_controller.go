@@ -65,22 +65,60 @@ func (c *AuthController) Login(ctx *gin.Context) {
 // RefreshToken はトークン更新エンドポイント
 // POST /api/auth/refresh
 func (c *AuthController) RefreshToken(ctx *gin.Context) {
-	var req dto.RefreshTokenRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// クッキーから refreshToken を取得
+	refreshToken, err := ctx.Cookie("refreshToken")
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "リフレッシュトークンが見つかりません"})
 		return
 	}
 
-	accessToken, err := c.service.RefreshAccessToken(req.RefreshToken)
+	accessToken, err := c.service.RefreshAccessToken(refreshToken)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
+	// HttpOnly Cookie にトークンを設定
+	ctx.SetCookie(
+		"accessToken",
+		accessToken,
+		int(security.GetTokenExpirationSeconds()),
+		"/",
+		ctx.Request.Host,
+		false, // Secure: 開発環境では false（本番環境では true にすること）
+		true,  // HttpOnly: JavaScript からアクセス不可
+	)
+
 	response := gin.H{
-		"accessToken": accessToken,
-		"expiresIn":   security.GetTokenExpirationSeconds(),
+		"expiresIn": security.GetTokenExpirationSeconds(),
 	}
 
 	ctx.JSON(http.StatusOK, response)
+}
+
+// Logout はログアウトエンドポイント
+// POST /api/auth/logout
+func (c *AuthController) Logout(ctx *gin.Context) {
+	// クッキーを削除（MaxAge を負の値に設定）
+	ctx.SetCookie(
+		"accessToken",
+		"",
+		-1,
+		"/",
+		ctx.Request.Host,
+		false,
+		true,
+	)
+
+	ctx.SetCookie(
+		"refreshToken",
+		"",
+		-1,
+		"/",
+		ctx.Request.Host,
+		false,
+		true,
+	)
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "ログアウトしました"})
 }
