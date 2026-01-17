@@ -8,6 +8,7 @@ import (
 	migration "simple-ledger/internal/common/db"
 	"simple-ledger/internal/common/db/seeder"
 	"simple-ledger/internal/common/security"
+	transactionRouter "simple-ledger/internal/transaction/router"
 	userRouter "simple-ledger/internal/user/router"
 	"strings"
 
@@ -86,6 +87,7 @@ func main() {
 	userRouter.SetupUserRoutes(apiGroup, db)
 	authRouter.SetupAuthRoutes(apiGroup, db)
 	chartOfAccountsRouter.SetupChartOfAccountsRoutes(apiGroup, db)
+	transactionRouter.SetupTransactionRoutes(apiGroup, db)
 	log.Print("Routes setup completed.")
 
 	// サーバー起動
