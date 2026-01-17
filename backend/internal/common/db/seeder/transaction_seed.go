@@ -3,6 +3,7 @@ package seeder
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"simple-ledger/internal/models"
 	"time"
 
@@ -33,25 +34,63 @@ func SeedTransactions(db *gorm.DB) {
 		return
 	}
 
+	// アカウントタイプごとに分類
+	accountsByType := make(map[models.AccountType][]models.ChartOfAccounts)
+	for _, account := range accounts {
+		accountsByType[account.Type] = append(accountsByType[account.Type], account)
+	}
+
 	// テストデータ作成
 	transactions := []models.Transaction{}
+	rand.Seed(time.Now().UnixNano())
 
 	// 各ユーザーの取引データを生成
 	for _, user := range users {
-		baseDate := time.Now().AddDate(0, 0, -30) // 30日前から開始
+		// 60日前から現在までの範囲
+		endDate := time.Now()
+		startDate := endDate.AddDate(0, 0, -60)
 
-		// ユーザーごとに複数の取引を作成
-		for i := 0; i < 10; i++ {
-			account := accounts[i%len(accounts)]
+		// 各勘定科目タイプごとに複数の取引を作成
+		accountTypes := []models.AccountType{
+			models.AssetAccount,
+			models.LiabilityAccount,
+			models.EquityAccount,
+			models.RevenueAccount,
+			models.ExpenseAccount,
+		}
 
-			transaction := models.Transaction{
-				UserID:            user.ID,
-				Date:              baseDate.AddDate(0, 0, i*3), // 3日ごとに取引
-				ChartOfAccountsID: account.ID,
-				Amount:            (i + 1) * 10000,
-				Description:       fmt.Sprintf("%sによる%sの取引", user.Name, account.Name),
+		// 1日あたり1-3件のランダムな取引を生成（60日間）
+		currentDate := startDate
+		for currentDate.Before(endDate) {
+			// 1日あたりの取引件数をランダムに決定（0-3件）
+			numTransactions := rand.Intn(4)
+
+			for i := 0; i < numTransactions; i++ {
+				// ランダムに勘定科目タイプを選択
+				accountType := accountTypes[rand.Intn(len(accountTypes))]
+
+				// 選択されたタイプの勘定科目を取得
+				typeAccounts := accountsByType[accountType]
+				if len(typeAccounts) == 0 {
+					continue
+				}
+
+				account := typeAccounts[rand.Intn(len(typeAccounts))]
+
+				// 100円から300,000円までのランダムな金額
+				amount := 100 + rand.Intn(300000-100+1)
+
+				transaction := models.Transaction{
+					UserID:            user.ID,
+					Date:              currentDate,
+					ChartOfAccountsID: account.ID,
+					Amount:            amount,
+					Description:       fmt.Sprintf("%sの%s取引（%s）", user.Name, account.Type, account.Name),
+				}
+				transactions = append(transactions, transaction)
 			}
-			transactions = append(transactions, transaction)
+
+			currentDate = currentDate.AddDate(0, 0, 1)
 		}
 	}
 
