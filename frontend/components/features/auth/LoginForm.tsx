@@ -35,7 +35,8 @@ export const LoginForm = () => {
     setIsLoading(true);
 
     try {
-      // クライアント側でログインをAPI呼び出し
+      // ログインAPI呼び出し
+      // トークンはサーバーが HttpOnly Cookie に自動設定
       const result = await login(data.email, data.password);
 
       if (!result.data) {
@@ -44,7 +45,7 @@ export const LoginForm = () => {
         return;
       }
 
-      // トークンが保存されたので、ダッシュボードにリダイレクト
+      // ログイン成功、ダッシュボードにリダイレクト
       router.push('/');
     } catch (err) {
       setApiError('エラーが発生しました');

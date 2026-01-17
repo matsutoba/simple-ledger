@@ -11,16 +11,16 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  accessToken: string;
-  refreshToken: string;
+  // トークンはHttpOnly Cookieに格納されるため、ここには含めない
   expiresIn: number;
 }
 
 /**
  * ログインAPIを呼び出す
+ * トークンはHttpOnly Cookieに自動設定される
  * @param email メールアドレス
  * @param password パスワード
- * @returns ログイン結果（トークン）
+ * @returns ログイン結果
  */
 export async function login(
   email: string,
@@ -31,10 +31,8 @@ export async function login(
     password,
   });
 
-  // ログイン成功時はトークンを保存
-  if (response.data) {
-    apiClient.setTokens(response.data.accessToken, response.data.refreshToken);
-  }
+  // トークンはサーバーが HttpOnly Cookie に設定済み
+  // クライアント側で何もする必要はない
 
   return response;
 }
