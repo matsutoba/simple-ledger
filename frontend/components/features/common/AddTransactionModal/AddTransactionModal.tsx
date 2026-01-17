@@ -11,7 +11,7 @@ import { BlockStack } from '@/components/ui/Stack';
 import { z } from 'zod';
 import { transactionSchema } from './transaction_schema';
 import { SelectChartOfAccounts } from './SelectChartOfAccounts';
-import { Spinner } from '@/components/ui/Spinner';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
@@ -145,25 +145,27 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           iconPosition="end"
         />
 
-        <Suspense
-          fallback={
-            <div className="space-y-1">
-              <label className="block text-sm font-medium">勘定科目</label>
-              <Spinner size="sm" />
-            </div>
-          }
-        >
-          <SelectChartOfAccounts
-            type={type}
-            category={category}
-            onCategoryChange={(value: string) => {
-              setCategory(value);
-              if (errors.category)
-                setErrors({ ...errors, category: undefined });
-            }}
-            errorMessage={errors.category}
-          />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense
+            fallback={
+              <div className="space-y-1">
+                <label className="block text-sm font-medium">勘定科目</label>
+                <div className="w-full h-10 bg-gray-200 rounded animate-pulse" />
+              </div>
+            }
+          >
+            <SelectChartOfAccounts
+              type={type}
+              category={category}
+              onCategoryChange={(value: string) => {
+                setCategory(value);
+                if (errors.category)
+                  setErrors({ ...errors, category: undefined });
+              }}
+              errorMessage={errors.category}
+            />
+          </Suspense>
+        </ErrorBoundary>
 
         <TextField
           label="説明"
