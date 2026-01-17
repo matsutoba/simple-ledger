@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { loginAction } from '@/app/actions/auth';
+import { login } from '@/lib/api/auth';
+import { useRouter } from 'next/navigation';
 import { loginFormSchema, type LoginFormData } from '@/lib/validations/auth';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/ui/TextField';
@@ -17,6 +18,7 @@ import { Notification } from '@/components/ui/Notification';
 import { Spinner } from '@/components/ui/Spinner';
 
 export const LoginForm = () => {
+  const router = useRouter();
   const [apiError, setApiError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -33,15 +35,17 @@ export const LoginForm = () => {
     setIsLoading(true);
 
     try {
-      const result = await loginAction(data.email, data.password);
+      // クライアント側でログインをAPI呼び出し
+      const result = await login(data.email, data.password);
 
-      // result が undefined の場合は redirect() が成功した状態
-      if (result && !result.success) {
+      if (!result.data) {
         setApiError(result.error || 'ログインに失敗しました');
         setIsLoading(false);
+        return;
       }
-      // result が undefined またはリダイレクトされた場合は、
-      // ブラウザが自動的にページ遷移するため setIsLoading は実行されない
+
+      // トークンが保存されたので、ダッシュボードにリダイレクト
+      router.push('/');
     } catch (err) {
       setApiError('エラーが発生しました');
       console.error(err);
