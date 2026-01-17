@@ -110,10 +110,9 @@ class ApiClient {
 
       // ステータスコードが401（認証失敗）の場合
       if (response.status === 401) {
-        this.clearTokens();
-        // トークンをリフレッシュして再試行することもできる
+        const errorData = await response.json().catch(() => ({}));
         return {
-          error: '認証に失敗しました',
+          error: errorData.error || '認証に失敗しました',
           statusCode: response.status,
         };
       }
