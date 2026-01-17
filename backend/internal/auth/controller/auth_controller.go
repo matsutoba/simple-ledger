@@ -33,10 +33,30 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
+	// HttpOnly Cookie にトークンを設定（XSS攻撃対策）
+	ctx.SetCookie(
+		"accessToken",
+		accessToken,
+		int(security.GetTokenExpirationSeconds()),
+		"/",
+		ctx.Request.Host,
+		false, // Secure: 開発環境では false（本番環境では true にすること）
+		true,  // HttpOnly: JavaScript からアクセス不可
+	)
+
+	ctx.SetCookie(
+		"refreshToken",
+		refreshToken,
+		int(security.GetRefreshTokenExpirationSeconds()),
+		"/",
+		ctx.Request.Host,
+		false, // Secure: 開発環境では false（本番環境では true にすること）
+		true,  // HttpOnly: JavaScript からアクセス不可
+	)
+
+	// クライアントに成功を通知（トークン値は含めない）
 	response := dto.LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresIn:    security.GetTokenExpirationSeconds(),
+		ExpiresIn: security.GetTokenExpirationSeconds(),
 	}
 
 	ctx.JSON(http.StatusOK, response)

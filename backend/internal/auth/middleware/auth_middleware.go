@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"net/http"
-	"strings"
 
 	"simple-ledger/internal/common/security"
 
@@ -10,25 +9,16 @@ import (
 )
 
 // AuthMiddleware は JWT トークンを検証するミドルウェア
+// HttpOnly Cookie からトークンを取得して検証
 func AuthMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// Authorization ヘッダーを取得
-		authHeader := ctx.GetHeader("Authorization")
-		if authHeader == "" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "missing authorization header"})
+		// クッキーからアクセストークンを取得
+		token, err := ctx.Cookie("accessToken")
+		if err != nil {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "missing access token cookie"})
 			ctx.Abort()
 			return
 		}
-
-		// Bearer スキームを確認
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
-			ctx.Abort()
-			return
-		}
-
-		token := parts[1]
 
 		// トークンを検証
 		claims, err := security.VerifyToken(token)
