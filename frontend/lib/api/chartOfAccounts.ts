@@ -20,7 +20,7 @@ export async function getChartOfAccountsByTypes(
 ): Promise<ApiResponse<GetChartOfAccountsResponse>> {
   // クエリパラメータを構築
   const queryParams = types.map((type) => `types=${type}`).join('&');
-  const path = `/chart-of-accounts?${queryParams}`;
+  const path = `/api/chart-of-accounts?${queryParams}`;
 
   return apiClient.get<GetChartOfAccountsResponse>(path);
 }

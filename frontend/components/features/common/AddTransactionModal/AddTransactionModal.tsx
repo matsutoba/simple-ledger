@@ -3,14 +3,15 @@
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { TransactionType } from '@/types/transaction';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { TransactionTypeButton } from './TransactionTypeButton';
 import { TextField } from '@/components/ui/TextField';
-import { Select } from '@/components/ui/Select';
 import { Typography } from '@/components/ui/Typography';
 import { BlockStack } from '@/components/ui/Stack';
 import { z } from 'zod';
 import { transactionSchema } from './transaction_schema';
+import { SelectChartOfAccounts } from './SelectChartOfAccounts';
+import { Spinner } from '@/components/ui/Spinner';
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
@@ -34,22 +35,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     Partial<Record<keyof TransactionFormData, string>>
   >({});
 
-  const incomeCategories = [
-    { label: '売上', value: '1' },
-    { label: 'その他収入', value: '2' },
-    { label: '雑収入', value: '3' },
-  ];
-  const expenseCategories = [
-    { label: '経費', value: '1' },
-    { label: '通信費', value: '2' },
-    { label: '交通費', value: '3' },
-    { label: '消耗品費', value: '4' },
-    { label: 'ソフトウェア', value: '5' },
-    { label: 'その他', value: '6' },
-  ];
-
-  const categories = type === 'income' ? incomeCategories : expenseCategories;
-
   const resetForm = () => {
     setType('expense');
     setDate(new Date().toISOString().split('T')[0]);
@@ -62,6 +47,18 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const handleClose = () => {
     resetForm();
     onClose();
+  };
+
+  const handleTypeChange = (transactionType: TransactionType) => {
+    setType(transactionType);
+    setCategory('');
+    if (errors.type) setErrors({ ...errors, type: undefined });
+    if (errors.category)
+      setErrors((prevErrors) => {
+        const newErrors = { ...prevErrors };
+        delete newErrors.category;
+        return newErrors;
+      });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -124,12 +121,12 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <TransactionTypeButton
               type="income"
               selected={type === 'income'}
-              onClick={setType}
+              onClick={() => handleTypeChange('income')}
             />
             <TransactionTypeButton
               type="expense"
               selected={type === 'expense'}
-              onClick={setType}
+              onClick={() => handleTypeChange('expense')}
             />
           </div>
         </BlockStack>
@@ -148,17 +145,25 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           iconPosition="end"
         />
 
-        <Select
-          label="勘定科目"
-          placeholder="選択してください"
-          options={type === 'income' ? incomeCategories : expenseCategories}
-          value={category}
-          onChange={(value: string) => {
-            setCategory(value);
-            if (errors.category) setErrors({ ...errors, category: undefined });
-          }}
-          errorMessage={errors.category}
-        />
+        <Suspense
+          fallback={
+            <div className="space-y-1">
+              <label className="block text-sm font-medium">勘定科目</label>
+              <Spinner size="sm" />
+            </div>
+          }
+        >
+          <SelectChartOfAccounts
+            type={type}
+            category={category}
+            onCategoryChange={(value: string) => {
+              setCategory(value);
+              if (errors.category)
+                setErrors({ ...errors, category: undefined });
+            }}
+            errorMessage={errors.category}
+          />
+        </Suspense>
 
         <TextField
           label="説明"

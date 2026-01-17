@@ -1,52 +1,30 @@
 'use client';
 
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import {
-  getChartOfAccountsByTypes,
+  useSuspenseQuery,
+  UseSuspenseQueryResult,
+} from '@tanstack/react-query';
+import {
   getIncomeChartOfAccounts,
   getExpenseChartOfAccounts,
-  type AccountType,
   type ChartOfAccount,
 } from '@/lib/api/chartOfAccounts';
 
 /**
- * 勘定科目取得用のカスタムフック
+ * 勘定科目取得用のカスタムフック (Suspense版)
  * TanStack Query を使用して、キャッシング・再フェッチ・エラーハンドリングを自動管理
+ * Suspenseでデータ取得を待機させるため、useSuspenseQueryを使用
  */
 
 /**
- * 指定された種別の勘定科目を取得
- * @param types - 取得する勘定科目区分
- * @param enabled - クエリの実行可否（デフォルト: true）
+ * 収入勘定科目を取得 (Suspense版 - Suspenseで待機)
+ * Suspenseで待機させたい場合、useQueryではなくこの関数を使用
  */
-export function useChartOfAccounts(
-  types: AccountType[],
-  enabled: boolean = true,
-): UseQueryResult<ChartOfAccount[], Error> {
-  return useQuery({
-    queryKey: ['chartOfAccounts', types.sort().join(',')],
-    queryFn: async () => {
-      const response = await getChartOfAccountsByTypes(types);
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      return response.data?.accounts || [];
-    },
-    enabled: enabled && types.length > 0,
-    staleTime: 5 * 60 * 1000, // 5分間はキャッシュを使用
-  });
-}
-
-/**
- * 収入勘定科目を取得
- * @param enabled - クエリの実行可否（デフォルト: true）
- */
-export function useIncomeChartOfAccounts(
-  enabled: boolean = true,
-): UseQueryResult<ChartOfAccount[], Error> {
-  return useQuery({
+export function useSuspenseIncomeChartOfAccounts(): UseSuspenseQueryResult<
+  ChartOfAccount[],
+  Error
+> {
+  return useSuspenseQuery({
     queryKey: ['chartOfAccounts', 'income'],
     queryFn: async () => {
       const response = await getIncomeChartOfAccounts();
@@ -57,19 +35,19 @@ export function useIncomeChartOfAccounts(
 
       return response.data?.accounts || [];
     },
-    enabled,
     staleTime: 5 * 60 * 1000,
   });
 }
 
 /**
- * 支出勘定科目を取得
- * @param enabled - クエリの実行可否（デフォルト: true）
+ * 支出勘定科目を取得 (Suspense版 - Suspenseで待機)
+ * Suspenseで待機させたい場合、useQueryではなくこの関数を使用
  */
-export function useExpenseChartOfAccounts(
-  enabled: boolean = true,
-): UseQueryResult<ChartOfAccount[], Error> {
-  return useQuery({
+export function useSuspenseExpenseChartOfAccounts(): UseSuspenseQueryResult<
+  ChartOfAccount[],
+  Error
+> {
+  return useSuspenseQuery({
     queryKey: ['chartOfAccounts', 'expense'],
     queryFn: async () => {
       const response = await getExpenseChartOfAccounts();
@@ -80,7 +58,6 @@ export function useExpenseChartOfAccounts(
 
       return response.data?.accounts || [];
     },
-    enabled,
     staleTime: 5 * 60 * 1000,
   });
 }
