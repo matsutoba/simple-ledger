@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	authRouter "simple-ledger/internal/auth/router"
+	chartOfAccountsRouter "simple-ledger/internal/chart_of_accounts/router"
 	"simple-ledger/internal/common/config"
 	migration "simple-ledger/internal/common/db"
 	"simple-ledger/internal/common/db/seeder"
@@ -84,6 +85,7 @@ func main() {
 	apiGroup := router.Group("/api")
 	userRouter.SetupUserRoutes(apiGroup, db)
 	authRouter.SetupAuthRoutes(apiGroup, db)
+	chartOfAccountsRouter.SetupChartOfAccountsRoutes(apiGroup, db)
 	log.Print("Routes setup completed.")
 
 	// サーバー起動

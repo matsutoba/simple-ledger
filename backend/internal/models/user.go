@@ -13,3 +13,8 @@ type User struct {
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`
 }
+
+// User 構造体は users テーブルにマッピングされることを明示する
+func (User) TableName() string {
+	return "users"
+}

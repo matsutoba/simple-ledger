@@ -26,6 +26,8 @@ export const TransactionTypeButton: React.FC<TransactionTypeButtonProps> = ({
       : `border-red-500 ${TRANSACTION_TYPE_BG_COLORS.expense} ${TRANSACTION_TYPE_COLORS.expense}`;
   const className = selected ? transactionClassName : defaultClassName;
 
+  const label = type === 'income' ? '収入' : '支出';
+
   return (
     <Button
       type="button"
@@ -35,7 +37,7 @@ export const TransactionTypeButton: React.FC<TransactionTypeButtonProps> = ({
       }}
       className={`px-4 py-3 rounded-lg border-2 transition-colors ${className}`}
     >
-      収入
+      {label}
     </Button>
   );
 };
