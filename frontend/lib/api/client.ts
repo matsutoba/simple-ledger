@@ -71,7 +71,7 @@ class ApiClient {
 
   /**
    * 共通のリクエストロジック
-   * - トークンの自動付与
+   * - クッキーの自動送信
    * - エラーハンドリング
    * - リトライロジック
    */
@@ -87,16 +87,11 @@ class ApiClient {
       headers.set('Content-Type', 'application/json');
     }
 
-    // アクセストークンを自動付与（存在する場合）
-    const accessToken = this.getAccessToken();
-    if (accessToken) {
-      headers.set('Authorization', `Bearer ${accessToken}`);
-    }
-
     try {
       const response = await fetch(url, {
         ...options,
         headers,
+        credentials: 'include', // クッキーを自動的に送信・受信
       });
 
       // ステータスコードが200-299の場合
@@ -136,29 +131,12 @@ class ApiClient {
   }
 
   /**
-   * ローカルストレージからアクセストークンを取得
+   * ログアウト
+   * サーバー側でクッキーを無効化
    */
-  private getAccessToken(): string | null {
-    if (typeof window === 'undefined') return null; // SSR時は実行しない
-    return localStorage.getItem('accessToken');
-  }
-
-  /**
-   * トークンをローカルストレージに保存
-   */
-  setTokens(accessToken: string, refreshToken: string): void {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-  }
-
-  /**
-   * トークンをローカルストレージから削除
-   */
-  private clearTokens(): void {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+  async logout(): Promise<void> {
+    // ログアウトエンドポイント（実装が必要）
+    await this.post('/api/auth/logout', {});
   }
 }
 

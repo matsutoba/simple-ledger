@@ -7,10 +7,9 @@ type LoginRequest struct {
 }
 
 // LoginResponse はログインレスポンス
+// トークンはHttpOnly Cookieに設定されるため、ここには含めない
 type LoginResponse struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
-	ExpiresIn    int    `json:"expiresIn"` // 秒単位
+	ExpiresIn int `json:"expiresIn"` // 秒単位
 }
 
 // RefreshTokenRequest はトークン更新リクエスト

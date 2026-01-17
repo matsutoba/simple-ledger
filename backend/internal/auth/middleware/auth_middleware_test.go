@@ -20,7 +20,11 @@ func TestAuthMiddleware_ValidToken(t *testing.T) {
 
 	// テストリクエスト
 	httpReq := httptest.NewRequest("GET", "/protected", nil)
-	httpReq.Header.Set("Authorization", "Bearer "+token)
+	// クッキーにトークンを設定
+	httpReq.AddCookie(&http.Cookie{
+		Name:  "accessToken",
+		Value: token,
+	})
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -50,7 +54,7 @@ func TestAuthMiddleware_ValidToken(t *testing.T) {
 func TestAuthMiddleware_MissingAuthHeader(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	// Authorization ヘッダーなしのリクエスト
+	// クッキーなしのリクエスト
 	httpReq := httptest.NewRequest("GET", "/protected", nil)
 
 	w := httptest.NewRecorder()
@@ -68,9 +72,12 @@ func TestAuthMiddleware_MissingAuthHeader(t *testing.T) {
 func TestAuthMiddleware_InvalidAuthHeaderFormat(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	// 不正なフォーマットの Authorization ヘッダー
+	// 不正なトークンをクッキーに設定
 	httpReq := httptest.NewRequest("GET", "/protected", nil)
-	httpReq.Header.Set("Authorization", "InvalidToken")
+	httpReq.AddCookie(&http.Cookie{
+		Name:  "accessToken",
+		Value: "invalid.token.here",
+	})
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -88,9 +95,12 @@ func TestAuthMiddleware_InvalidToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	security.InitJWT("test-secret", 1, 1)
 
-	// 不正なトークン
+	// 不正なトークンをクッキーに設定
 	httpReq := httptest.NewRequest("GET", "/protected", nil)
-	httpReq.Header.Set("Authorization", "Bearer invalid.token.here")
+	httpReq.AddCookie(&http.Cookie{
+		Name:  "accessToken",
+		Value: "invalid.token.here",
+	})
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -113,7 +123,10 @@ func TestAuthMiddleware_ExpiredToken(t *testing.T) {
 	expiredToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaXNBY3RpdmUiOnRydWUsImlhdCI6MTcwMzY2Nzk0MCwiZXhwIjoxNzAzNjY3OTQwfQ.invalid"
 
 	httpReq := httptest.NewRequest("GET", "/protected", nil)
-	httpReq.Header.Set("Authorization", "Bearer "+expiredToken)
+	httpReq.AddCookie(&http.Cookie{
+		Name:  "accessToken",
+		Value: expiredToken,
+	})
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
