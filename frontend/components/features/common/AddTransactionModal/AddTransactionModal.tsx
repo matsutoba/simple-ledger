@@ -14,6 +14,7 @@ import { SelectChartOfAccounts } from './SelectChartOfAccounts';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { useCreateTransaction } from '@/hooks/useTransactions';
 import { Spinner } from '@/components/ui/Spinner';
+import { showSuccessToast, showErrorToast } from '@/components/ui/Toast';
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
@@ -101,13 +102,16 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       } as const satisfies Parameters<typeof mutate>[0],
       {
         onSuccess: () => {
+          showSuccessToast('取引を保存しました');
           // フォームをリセット
           resetForm();
           // モーダルを閉じる
           onExecute();
         },
         onError: (error: unknown) => {
-          console.error('取引の作成に失敗しました:', error);
+          const errorMessage =
+            error instanceof Error ? error.message : '取引の作成に失敗しました';
+          showErrorToast(errorMessage);
         },
       },
     );
