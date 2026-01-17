@@ -6,6 +6,7 @@ import { Transaction, TransactionType } from '@/types/transaction';
 import { useMemo } from 'react';
 import { TRANSACTION_TYPE_COLORS } from '@/constants';
 import { TransactionTypeIcon } from '../common/TransactionTypeIcon';
+import { isIncomeType } from '@/lib/utils/accountType';
 
 interface RecentTransactionListProps {
   transactions: Transaction[];
@@ -44,8 +45,14 @@ export const RecentTransactionList: React.FC<RecentTransactionListProps> = ({
                 >
                   <td className={BODY_CELL_STYLE}>
                     <div className="flex items-center gap-2 mb-1">
-                      <TransactionTypeIcon type={tx.type} />
-                      <Typography>{tx.description}</Typography>
+                      <TransactionTypeIcon
+                        type={
+                          isIncomeType(tx.chartOfAccountsType)
+                            ? 'income'
+                            : 'expense'
+                        }
+                      />
+                      <Typography>{tx.chartOfAccountsName}</Typography>
                     </div>
                     <Typography className="text-sm text-gray-500">
                       {new Date(tx.date).toLocaleDateString()}
@@ -53,10 +60,14 @@ export const RecentTransactionList: React.FC<RecentTransactionListProps> = ({
                   </td>
                   <td className={BODY_CELL_STYLE}>
                     <Typography
-                      className={getTransactionColor(tx.type)}
+                      className={getTransactionColor(
+                        isIncomeType(tx.chartOfAccountsType)
+                          ? 'income'
+                          : 'expense',
+                      )}
                       align="right"
                     >
-                      {tx.type === 'expense' ? '-' : '+'}
+                      {tx.chartOfAccountsType === 'expense' ? '-' : '+'}
                       {tx.amount.toLocaleString()} 円
                     </Typography>
                   </td>

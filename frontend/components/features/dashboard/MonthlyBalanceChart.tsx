@@ -14,15 +14,23 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { isIncomeType } from '@/lib/utils/accountType';
 
 interface MonthlyBalanceChartProps {
   transactions: Transaction[];
 }
 
+interface ChartData {
+  month: string;
+  収入: number;
+  支出: number;
+  収支: number;
+}
+
 export const MonthlyBalanceChart: React.FC<MonthlyBalanceChartProps> = ({
   transactions,
 }) => {
-  const chartData = useMemo(() => {
+  const chartData: ChartData[] = useMemo(() => {
     const monthlyData: { [key: string]: { income: number; expense: number } } =
       {};
 
@@ -31,7 +39,7 @@ export const MonthlyBalanceChart: React.FC<MonthlyBalanceChartProps> = ({
       if (!monthlyData[month]) {
         monthlyData[month] = { income: 0, expense: 0 };
       }
-      if (t.type === 'income') {
+      if (isIncomeType(t.chartOfAccountsType)) {
         monthlyData[month].income += t.amount;
       } else {
         monthlyData[month].expense += t.amount;
@@ -53,12 +61,14 @@ export const MonthlyBalanceChart: React.FC<MonthlyBalanceChartProps> = ({
       <BlockStack gap="md">
         <Typography>月別収支推移</Typography>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData}>
+          <BarChart data={chartData} margin={{ left: 50, right: 30 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="month" />
             <YAxis />
             <Tooltip
-              formatter={(value) => `¥${Number(value).toLocaleString()}`}
+              formatter={(value: ChartData) =>
+                `¥${Number(value).toLocaleString()}`
+              }
             />
             <Legend />
             <Bar dataKey="収入" fill={TRANSACTION_TYPE_HEX_COLORS.income} />
