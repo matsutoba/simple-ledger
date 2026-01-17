@@ -37,7 +37,7 @@ func (ctrl *transactionController) Create() gin.HandlerFunc {
 			return
 		}
 
-		userID, exists := c.Get("userId")
+		userID, exists := c.Get("userID")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "User ID not found",
@@ -68,7 +68,7 @@ func (ctrl *transactionController) GetByID() gin.HandlerFunc {
 			return
 		}
 
-		userID, exists := c.Get("userId")
+		userID, exists := c.Get("userID")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "User ID not found",
@@ -97,7 +97,7 @@ func (ctrl *transactionController) GetByID() gin.HandlerFunc {
 
 func (ctrl *transactionController) GetByUserID() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("userId")
+		userID, exists := c.Get("userID")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "User ID not found",
@@ -137,7 +137,7 @@ func (ctrl *transactionController) Update() gin.HandlerFunc {
 			return
 		}
 
-		userID, exists := c.Get("userId")
+		userID, exists := c.Get("userID")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "User ID not found",
@@ -175,7 +175,7 @@ func (ctrl *transactionController) Delete() gin.HandlerFunc {
 			return
 		}
 
-		userID, exists := c.Get("userId")
+		userID, exists := c.Get("userID")
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error": "User ID not found",
