@@ -83,7 +83,8 @@ func TestGetByUserIDWithPaginationController(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response dto.GetTransactionsWithPaginationResponse
-	json.Unmarshal(w.Body.Bytes(), &response)
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
 
 	assert.Equal(t, 1, response.Page)
 	assert.Equal(t, 10, response.PageSize)
@@ -101,7 +102,8 @@ func TestGetByUserIDWithPaginationController(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
 
 	assert.Equal(t, 3, response.Page)
 	assert.Len(t, response.Transactions, 10)
