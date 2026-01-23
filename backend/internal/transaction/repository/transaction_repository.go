@@ -65,6 +65,34 @@ func (r *TransactionRepository) GetByUserIDAndDateRange(
 	return transactions, nil
 }
 
+// GetByUserIDWithPagination: ユーザーIDで取引一覧をページネーション付きで取得
+func (r *TransactionRepository) GetByUserIDWithPagination(userID uint, page, pageSize int) ([]models.Transaction, int64, error) {
+	var transactions []models.Transaction
+	var total int64
+
+	// 全件数を取得
+	if err := r.db.
+		Where("user_id = ?", userID).
+		Model(&models.Transaction{}).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// ページネーション付きでデータを取得
+	offset := (page - 1) * pageSize
+	if err := r.db.
+		Preload("ChartOfAccounts").
+		Where("user_id = ?", userID).
+		Order("date DESC").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&transactions).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return transactions, total, nil
+}
+
 // GetByUserIDAndChartOfAccountsID: ユーザーIDと勘定科目IDで取引一覧を取得
 func (r *TransactionRepository) GetByUserIDAndChartOfAccountsID(
 	userID uint,

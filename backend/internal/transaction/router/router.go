@@ -20,6 +20,7 @@ func SetupTransactionRoutes(apiGroup *gin.RouterGroup, db *gorm.DB) {
 	{
 		transactionRoutes.POST("", ctrl.Create())
 		transactionRoutes.GET("", ctrl.GetByUserID())
+		transactionRoutes.GET("/paginated", ctrl.GetByUserIDWithPagination())
 		transactionRoutes.GET("/:id", ctrl.GetByID())
 		transactionRoutes.PUT("/:id", ctrl.Update())
 		transactionRoutes.DELETE("/:id", ctrl.Delete())
