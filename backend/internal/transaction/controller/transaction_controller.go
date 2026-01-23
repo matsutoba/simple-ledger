@@ -131,7 +131,7 @@ func (ctrl *transactionController) GetByUserIDWithPagination() gin.HandlerFunc {
 		var req dto.GetTransactionsWithPaginationRequest
 		if err := c.ShouldBindQuery(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid query parameters",
+				"error": "Invalid query parameters: " + err.Error(),
 			})
 			return
 		}
