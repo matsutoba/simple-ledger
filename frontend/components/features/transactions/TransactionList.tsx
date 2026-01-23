@@ -74,11 +74,11 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                     </td>
                     <td className={BODY_CELL_STYLE}>
                       <IconButton
-                        icon="trash"
+                        icon="edit"
                         size="md"
                         color="warning"
                         variant="ghost"
-                        ariaLabel="Delete transaction"
+                        ariaLabel="Edit transaction"
                         className="cursor-pointer"
                       />
                     </td>
