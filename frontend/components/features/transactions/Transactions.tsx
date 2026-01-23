@@ -13,6 +13,7 @@ import { AddTransactionModal } from '../common/AddTransactionModal/AddTransactio
 import { useGetInfinityTransactions } from '@/hooks/useTransactions';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Spinner } from '@/components/ui/Spinner';
+import { isIncomeType } from '@/lib/utils/accountType';
 
 export const Tranasctions: React.FC = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -30,19 +31,30 @@ export const Tranasctions: React.FC = () => {
   const [isOpenAddTransactionModal, setIsOpenAddTransactionModal] =
     useState(false);
 
-  // 全ページのトランザクションを統合して重複を除外
+  // 全ページのトランザクションを統合して重複を除外し、categoryValueに基づいてフィルタ
   const transactions: Transaction[] = useMemo(() => {
     if (!data?.pages) return [];
 
     const seen = new Set<number>();
-    return data.pages
+    const allTransactions = data.pages
       .flatMap((page) => page.transactions || [])
       .filter((tx) => {
         if (!tx || seen.has(tx.id)) return false;
         seen.add(tx.id);
         return true;
       });
-  }, [data?.pages]);
+
+    if (categoryValue === 'all') {
+      return allTransactions;
+    }
+    if (categoryValue === 'income') {
+      return allTransactions.filter((tx) => isIncomeType(tx.chartOfAccountsType));
+    }
+    if (categoryValue === 'expense') {
+      return allTransactions.filter((tx) => !isIncomeType(tx.chartOfAccountsType));
+    }
+    return allTransactions;
+  }, [data?.pages, categoryValue]);
 
   // useInView を使用した無限スクロール
   useEffect(() => {
