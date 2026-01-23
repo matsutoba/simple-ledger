@@ -19,7 +19,7 @@ export const Dashboard: React.FC = () => {
   const [isOpenAddTransactionModal, setIsOpenAddTransactionModal] =
     useState(false);
 
-  const { data, isFetching } = useGetTransactions();
+  const { data, isFetching, refetch } = useGetTransactions();
   const transactions: Transaction[] = data?.transactions || [];
 
   // 総収入の計算
@@ -62,7 +62,10 @@ export const Dashboard: React.FC = () => {
       <AddTransactionModal
         open={isOpenAddTransactionModal}
         onClose={() => setIsOpenAddTransactionModal(false)}
-        onSuccess={() => setIsOpenAddTransactionModal(false)}
+        onSuccess={() => {
+          setIsOpenAddTransactionModal(false);
+          refetch();
+        }}
       />
     </>
   );

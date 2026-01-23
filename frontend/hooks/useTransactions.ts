@@ -95,7 +95,7 @@ export function useGetTransactions(): UseQueryResult<
       }
       return response.data;
     },
-    staleTime: 1000 * 60, // 1分間キャッシュを保持
+    staleTime: 0,
   }) as UseQueryResult<{ transactions: Transaction[] }, unknown>;
 }
 
