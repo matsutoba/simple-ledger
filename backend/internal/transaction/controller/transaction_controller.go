@@ -14,6 +14,7 @@ type TransactionController interface {
 	Create() gin.HandlerFunc
 	GetByID() gin.HandlerFunc
 	GetByUserID() gin.HandlerFunc
+	GetByUserIDWithPagination() gin.HandlerFunc
 	Update() gin.HandlerFunc
 	Delete() gin.HandlerFunc
 }
@@ -106,6 +107,45 @@ func (ctrl *transactionController) GetByUserID() gin.HandlerFunc {
 		}
 
 		result, err := ctrl.service.GetByUserID(userID.(uint))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to fetch transactions",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, result)
+	}
+}
+
+func (ctrl *transactionController) GetByUserIDWithPagination() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, exists := c.Get("userID")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "User ID not found",
+			})
+			return
+		}
+
+		var req dto.GetTransactionsWithPaginationRequest
+		if err := c.ShouldBindQuery(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid query parameters: " + err.Error(),
+			})
+			return
+		}
+
+		var result interface{}
+		var err error
+
+		// キーワードが指定されている場合は検索を実行
+		if req.Keyword != "" {
+			result, err = ctrl.service.GetByUserIDWithPaginationAndKeyword(userID.(uint), req.Page, req.PageSize, req.Keyword)
+		} else {
+			result, err = ctrl.service.GetByUserIDWithPagination(userID.(uint), req.Page, req.PageSize)
+		}
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Failed to fetch transactions",

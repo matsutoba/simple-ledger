@@ -1,5 +1,11 @@
 export type TransactionType = 'income' | 'expense';
 export type TrendType = TransactionType | 'balance';
+export type ChartOfAccountsType =
+  | 'asset'
+  | 'liability'
+  | 'equity'
+  | 'revenue'
+  | 'expense';
 
 export interface Transaction {
   id: number;
@@ -8,7 +14,7 @@ export interface Transaction {
   chartOfAccountsId: number;
   chartOfAccountsCode: string;
   chartOfAccountsName: string;
-  chartOfAccountsType: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+  chartOfAccountsType: ChartOfAccountsType;
   amount: number;
   description: string;
   createdAt: string;

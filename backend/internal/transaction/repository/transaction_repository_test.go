@@ -167,3 +167,72 @@ func TestDeleteByUserIDAndID(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, result)
 }
+
+func TestGetByUserIDWithPagination(t *testing.T) {
+	db := setupTransactionTestDB()
+	repo := NewTransactionRepository(db)
+
+	// テストデータの作成（30件）
+	for i := 1; i <= 30; i++ {
+		transaction := models.Transaction{
+			UserID:            1,
+			Date:              time.Date(2024, 12, i%28+1, 0, 0, 0, 0, time.UTC),
+			ChartOfAccountsID: 1,
+			Amount:            10000 * i,
+			Description:       "テスト取引" + string(rune(i)),
+		}
+		db.Create(&transaction)
+	}
+
+	// テスト1: ページ1, ページサイズ10を取得
+	transactions, total, err := repo.GetByUserIDWithPagination(1, 1, 10)
+	assert.NoError(t, err)
+	assert.Len(t, transactions, 10)
+	assert.Equal(t, int64(30), total)
+	page1IDs := make([]uint, len(transactions))
+	for i, tx := range transactions {
+		page1IDs[i] = tx.ID
+	}
+
+	// テスト2: ページ2, ページサイズ10を取得
+	transactions, total, err = repo.GetByUserIDWithPagination(1, 2, 10)
+	assert.NoError(t, err)
+	assert.Len(t, transactions, 10)
+	assert.Equal(t, int64(30), total)
+	page2IDs := make([]uint, len(transactions))
+	for i, tx := range transactions {
+		page2IDs[i] = tx.ID
+	}
+
+	// ページ1とページ2で異なるデータが返されることを確認
+	for _, id := range page1IDs {
+		assert.NotContains(t, page2IDs, id, "Page 1 and Page 2 should have different transactions")
+	}
+
+	// テスト3: ページ3, ページサイズ10を取得
+	transactions, total, err = repo.GetByUserIDWithPagination(1, 3, 10)
+	assert.NoError(t, err)
+	assert.Len(t, transactions, 10)
+	assert.Equal(t, int64(30), total)
+	page3IDs := make([]uint, len(transactions))
+	for i, tx := range transactions {
+		page3IDs[i] = tx.ID
+	}
+
+	// ページ1とページ3で異なるデータが返されることを確認
+	for _, id := range page1IDs {
+		assert.NotContains(t, page3IDs, id, "Page 1 and Page 3 should have different transactions")
+	}
+
+	// テスト4: ページサイズを変更（ページサイズ20）
+	transactions, total, err = repo.GetByUserIDWithPagination(1, 1, 20)
+	assert.NoError(t, err)
+	assert.Len(t, transactions, 20)
+	assert.Equal(t, int64(30), total)
+
+	// テスト5: 別のユーザーで検索（該当なし）
+	transactions, total, err = repo.GetByUserIDWithPagination(2, 1, 10)
+	assert.NoError(t, err)
+	assert.Len(t, transactions, 0)
+	assert.Equal(t, int64(0), total)
+}

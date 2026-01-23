@@ -25,8 +25,21 @@ class ApiClient {
   /**
    * GETリクエスト
    */
-  async get<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>> {
-    return this.request<T>(path, { ...options, method: 'GET' });
+  async get<T>(
+    path: string,
+    options?: RequestInit & { params?: Record<string, string | number> },
+  ): Promise<ApiResponse<T>> {
+    let finalPath = path;
+    if (options?.params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(options.params).forEach(([key, value]) => {
+        searchParams.append(key, String(value));
+      });
+      finalPath = `${path}?${searchParams.toString()}`;
+    }
+
+    const { ...restOptions } = options || {};
+    return this.request<T>(finalPath, { ...restOptions, method: 'GET' });
   }
 
   /**

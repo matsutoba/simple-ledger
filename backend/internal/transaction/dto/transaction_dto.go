@@ -27,3 +27,17 @@ type GetTransactionsResponse struct {
 	Transactions []TransactionResponse `json:"transactions"`
 	Total        int                   `json:"total"`
 }
+
+type GetTransactionsWithPaginationRequest struct {
+	Page     int    `form:"page" binding:"required,min=1"`
+	PageSize int    `form:"pageSize" binding:"required,min=1,max=100"`
+	Keyword  string `form:"keyword"`
+}
+
+type GetTransactionsWithPaginationResponse struct {
+	Transactions []TransactionResponse `json:"transactions"`
+	Total        int                   `json:"total"`
+	Page         int                   `json:"page"`
+	PageSize     int                   `json:"pageSize"`
+	HasNextPage  bool                  `json:"hasNextPage"`
+}

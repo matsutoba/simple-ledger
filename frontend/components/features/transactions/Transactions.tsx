@@ -2,24 +2,76 @@
 
 import { Button } from '@/components/ui/Button';
 import { BlockStack, InlineStack } from '@/components/ui/Stack';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useInView } from 'react-intersection-observer';
 import { Transaction, TransactionFilterCategory } from '@/types/transaction';
 import { Typography } from '@/components/ui/Typography';
-import { transactionData } from '../dashboard/testdata';
 import { TransactionList } from './TransactionList';
 import { TransactionFilterBar } from './TransactionFilterBar';
-import { AmountCard } from '../common/AmountCard';
 import { Icon } from '@/components/ui/Icon';
 import { AddTransactionModal } from '../common/AddTransactionModal/AddTransactionModal';
+import { useGetInfinityTransactions } from '@/hooks/useTransactions';
+import { useDebounce } from '@/hooks/useDebounce';
+import { Spinner } from '@/components/ui/Spinner';
+import { isIncomeType } from '@/lib/utils/accountType';
 
 export const Tranasctions: React.FC = () => {
-  const [transactions, setTransactions] =
-    useState<Transaction[]>(transactionData);
   const [searchValue, setSearchValue] = useState('');
+  const debouncedKeyword = useDebounce(searchValue, 500);
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    refetch,
+  } = useGetInfinityTransactions(50, debouncedKeyword || undefined);
+
+  const { ref: observerTarget, inView } = useInView({
+    threshold: 0.1,
+  });
+
   const [categoryValue, setCategoryValue] =
     useState<TransactionFilterCategory>('all');
   const [isOpenAddTransactionModal, setIsOpenAddTransactionModal] =
     useState(false);
+
+  // 全ページのトランザクションを統合して重複を除外し、categoryValueに基づいてフィルタ
+  const transactions: Transaction[] = useMemo(() => {
+    if (!data?.pages) return [];
+
+    const seen = new Set<number>();
+    const allTransactions = data.pages
+      .flatMap((page) => page.transactions || [])
+      .filter((tx) => {
+        if (!tx || seen.has(tx.id)) return false;
+        seen.add(tx.id);
+        return true;
+      });
+
+    if (categoryValue === 'all') {
+      return allTransactions;
+    }
+    if (categoryValue === 'income') {
+      return allTransactions.filter((tx) =>
+        isIncomeType(tx.chartOfAccountsType),
+      );
+    }
+    if (categoryValue === 'expense') {
+      return allTransactions.filter(
+        (tx) => !isIncomeType(tx.chartOfAccountsType),
+      );
+    }
+    return allTransactions;
+  }, [data, categoryValue]);
+
+  // useInView を使用した無限スクロール
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetching && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, isFetching, isFetchingNextPage, fetchNextPage]);
 
   return (
     <>
@@ -40,18 +92,26 @@ export const Tranasctions: React.FC = () => {
           categoryValue={categoryValue}
           onCategoryChange={setCategoryValue}
         />
-        <div className="w-full grid grid-cols-1 gap-2 grid-cols-3">
-          <AmountCard amount={750000} type="income" />
-          <AmountCard amount={38500} type="expense" />
-          <AmountCard amount={711500} type="balance" />
-        </div>
         <TransactionList transactions={transactions} />
+
+        {/* 無限スクロール検出用の要素 */}
+        <div ref={observerTarget} className="py-8 flex justify-center">
+          {isFetchingNextPage && <Spinner />}
+          {!hasNextPage && transactions.length > 0 && (
+            <Typography className="text-gray-500">
+              すべての取引を読み込みました
+            </Typography>
+          )}
+        </div>
       </BlockStack>
 
       <AddTransactionModal
         open={isOpenAddTransactionModal}
         onClose={() => setIsOpenAddTransactionModal(false)}
-        onExecute={() => setIsOpenAddTransactionModal(false)}
+        onSuccess={() => {
+          setIsOpenAddTransactionModal(false);
+          refetch();
+        }}
       />
     </>
   );

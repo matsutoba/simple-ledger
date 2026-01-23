@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/components/shadcn/ui/utils';
-import { BlockStack } from '@/components/ui/Stack';
+import { BlockStack, InlineStack } from '@/components/ui/Stack';
 import { Typography } from '@/components/ui/Typography';
 import { Transaction, TransactionType } from '@/types/transaction';
 import { useMemo } from 'react';
@@ -12,17 +12,13 @@ interface RecentTransactionListProps {
   transactions: Transaction[];
 }
 
-const HEADER_CELL_STYLE =
-  'border-b border-gray-400 text-gray-700 font-medium px-4 py-2 text-left';
 const BODY_CELL_STYLE = 'border-b border-gray-200 px-4 py-2';
 
 export const RecentTransactionList: React.FC<RecentTransactionListProps> = ({
   transactions,
 }) => {
   const recentTransactions = useMemo(() => {
-    return [...transactions]
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 5);
+    return [...transactions].slice(0, 5);
   }, [transactions]);
 
   const getTransactionColor = (type: TransactionType) =>
@@ -44,16 +40,11 @@ export const RecentTransactionList: React.FC<RecentTransactionListProps> = ({
                   )}
                 >
                   <td className={BODY_CELL_STYLE}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <TransactionTypeIcon
-                        type={
-                          isIncomeType(tx.chartOfAccountsType)
-                            ? 'income'
-                            : 'expense'
-                        }
-                      />
-                      <Typography>{tx.chartOfAccountsName}</Typography>
-                    </div>
+                    <InlineStack gap="sm" alignItems="center">
+                      <TransactionTypeIcon type={tx.chartOfAccountsType} />
+                      <Typography bold>{tx.chartOfAccountsName}</Typography>
+                      <Typography>{tx.description}</Typography>
+                    </InlineStack>
                     <Typography className="text-sm text-gray-500">
                       {new Date(tx.date).toLocaleDateString()}
                     </Typography>

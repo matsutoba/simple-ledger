@@ -12,6 +12,8 @@ type TransactionService interface {
 	GetByID(transactionID uint, userID uint) (*dto.TransactionResponse, error)
 	GetByUserID(userID uint) (*dto.GetTransactionsResponse, error)
 	GetByUserIDAndDateRange(userID uint, startDate string, endDate string) (*dto.GetTransactionsResponse, error)
+	GetByUserIDWithPagination(userID uint, page, pageSize int) (*dto.GetTransactionsWithPaginationResponse, error)
+	GetByUserIDWithPaginationAndKeyword(userID uint, page, pageSize int, keyword string) (*dto.GetTransactionsWithPaginationResponse, error)
 	Update(transactionID uint, userID uint, req *dto.CreateTransactionRequest) (*dto.TransactionResponse, error)
 	Delete(transactionID uint, userID uint) error
 }
@@ -108,6 +110,54 @@ func (s *transactionService) GetByUserIDAndDateRange(userID uint, startDate stri
 	return &dto.GetTransactionsResponse{
 		Transactions: responses,
 		Total:        total,
+	}, nil
+}
+
+func (s *transactionService) GetByUserIDWithPagination(userID uint, page, pageSize int) (*dto.GetTransactionsWithPaginationResponse, error) {
+	transactions, totalCount, err := s.repo.GetByUserIDWithPagination(userID, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+
+	var responses []dto.TransactionResponse
+	total := 0
+	for _, tx := range transactions {
+		responses = append(responses, *s.transactionToResponse(&tx))
+		total += tx.Amount
+	}
+
+	hasNextPage := int64(page*pageSize) < totalCount
+
+	return &dto.GetTransactionsWithPaginationResponse{
+		Transactions: responses,
+		Total:        total,
+		Page:         page,
+		PageSize:     pageSize,
+		HasNextPage:  hasNextPage,
+	}, nil
+}
+
+func (s *transactionService) GetByUserIDWithPaginationAndKeyword(userID uint, page, pageSize int, keyword string) (*dto.GetTransactionsWithPaginationResponse, error) {
+	transactions, totalCount, err := s.repo.GetByUserIDWithPaginationAndKeyword(userID, page, pageSize, keyword)
+	if err != nil {
+		return nil, err
+	}
+
+	var responses []dto.TransactionResponse
+	total := 0
+	for _, tx := range transactions {
+		responses = append(responses, *s.transactionToResponse(&tx))
+		total += tx.Amount
+	}
+
+	hasNextPage := int64(page*pageSize) < totalCount
+
+	return &dto.GetTransactionsWithPaginationResponse{
+		Transactions: responses,
+		Total:        total,
+		Page:         page,
+		PageSize:     pageSize,
+		HasNextPage:  hasNextPage,
 	}, nil
 }
 

@@ -8,13 +8,13 @@ type Transaction struct {
 	ID uint `gorm:"primaryKey" json:"id"`
 
 	// UserID: ユーザーID（外部キー）
-	UserID uint `gorm:"not null;index" json:"userId"`
+	UserID uint `gorm:"not null;index:idx_user_date_created,sort:asc" json:"userId"`
 
 	// User: リレーション（ユーザー）
 	User *User `gorm:"foreignKey:UserID" json:"user,omitempty"`
 
 	// Date: 取引日
-	Date time.Time `gorm:"type:date;not null;index" json:"date"`
+	Date time.Time `gorm:"type:date;not null;index:idx_user_date_created,sort:desc" json:"date"`
 
 	// ChartOfAccountsID: 勘定科目ID（外部キー）
 	ChartOfAccountsID uint `gorm:"not null;index" json:"chartOfAccountsId"`
@@ -29,7 +29,7 @@ type Transaction struct {
 	Description string `gorm:"type:text" json:"description"`
 
 	// CreatedAt: 取引の作成日時
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt time.Time `gorm:"index:idx_user_date_created,sort:desc" json:"createdAt"`
 
 	// UpdatedAt: 取引の最終更新日時
 	UpdatedAt time.Time `json:"updatedAt"`
