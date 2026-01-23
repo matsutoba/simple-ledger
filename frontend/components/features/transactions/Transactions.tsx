@@ -5,16 +5,16 @@ import { BlockStack, InlineStack } from '@/components/ui/Stack';
 import { useState } from 'react';
 import { Transaction, TransactionFilterCategory } from '@/types/transaction';
 import { Typography } from '@/components/ui/Typography';
-import { transactionData } from '../dashboard/testdata';
 import { TransactionList } from './TransactionList';
 import { TransactionFilterBar } from './TransactionFilterBar';
-import { AmountCard } from '../common/AmountCard';
 import { Icon } from '@/components/ui/Icon';
 import { AddTransactionModal } from '../common/AddTransactionModal/AddTransactionModal';
+import { useGetTransactions } from '@/hooks/useTransactions';
 
 export const Tranasctions: React.FC = () => {
-  const [transactions, setTransactions] =
-    useState<Transaction[]>(transactionData);
+  const { data, isFetching } = useGetTransactions();
+  const transactions: Transaction[] = data?.transactions || [];
+
   const [searchValue, setSearchValue] = useState('');
   const [categoryValue, setCategoryValue] =
     useState<TransactionFilterCategory>('all');
@@ -40,11 +40,6 @@ export const Tranasctions: React.FC = () => {
           categoryValue={categoryValue}
           onCategoryChange={setCategoryValue}
         />
-        <div className="w-full grid grid-cols-1 gap-2 grid-cols-3">
-          <AmountCard amount={750000} type="income" />
-          <AmountCard amount={38500} type="expense" />
-          <AmountCard amount={711500} type="balance" />
-        </div>
         <TransactionList transactions={transactions} />
       </BlockStack>
 

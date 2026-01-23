@@ -4,16 +4,20 @@ import {
   TRANSACTION_TYPE_BG_COLORS,
   TRANSACTION_TYPE_COLORS,
 } from '@/constants';
-import { TransactionType } from '@/types/transaction';
+import { isIncomeType } from '@/lib/utils/accountType';
+import { ChartOfAccountsType } from '@/types/transaction';
 
 interface TransactionTypeIconProps {
-  type: TransactionType;
+  type: ChartOfAccountsType;
 }
 
 export const TransactionTypeIcon: React.FC<TransactionTypeIconProps> = ({
   type,
 }) => {
-  const color = `${TRANSACTION_TYPE_COLORS[type]} ${TRANSACTION_TYPE_BG_COLORS[type]}`;
+  const transactionType = isIncomeType(type) ? 'income' : 'expense';
+  const color = `${TRANSACTION_TYPE_COLORS[transactionType]} ${TRANSACTION_TYPE_BG_COLORS[transactionType]}`;
 
-  return <Badge className={color}>{TRANSACTION_TYPE_LABELS[type]}</Badge>;
+  return (
+    <Badge className={color}>{TRANSACTION_TYPE_LABELS[transactionType]}</Badge>
+  );
 };

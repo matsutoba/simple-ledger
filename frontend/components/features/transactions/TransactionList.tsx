@@ -2,10 +2,11 @@ import { Card } from '@/components/ui/Card';
 import { cn } from '@/components/shadcn/ui/utils';
 import { BlockStack } from '@/components/ui/Stack';
 import { Typography } from '@/components/ui/Typography';
-import { Transaction, TransactionType } from '@/types/transaction';
+import { ChartOfAccountsType, Transaction } from '@/types/transaction';
 import { TRANSACTION_TYPE_COLORS } from '@/constants';
 import { TransactionTypeIcon } from '../common/TransactionTypeIcon';
 import { IconButton } from '@/components/ui/IconButton';
+import { isExpenseType } from '@/lib/utils/accountType';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -18,8 +19,8 @@ const BODY_CELL_STYLE = 'border-b border-gray-200 px-4 py-2';
 export const TransactionList: React.FC<TransactionListProps> = ({
   transactions,
 }) => {
-  const getTransactionColor = (type: TransactionType) =>
-    TRANSACTION_TYPE_COLORS[type];
+  const getTransactionColor = (type: ChartOfAccountsType) =>
+    TRANSACTION_TYPE_COLORS[isExpenseType(type) ? 'expense' : 'income'];
 
   return (
     <Card>
@@ -52,7 +53,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                     </Typography>
                   </td>
                   <td className={BODY_CELL_STYLE}>
-                    <TransactionTypeIcon type={tx.type} />
+                    <TransactionTypeIcon type={tx.chartOfAccountsType} />
                   </td>
 
                   <td className={BODY_CELL_STYLE}>
@@ -61,10 +62,10 @@ export const TransactionList: React.FC<TransactionListProps> = ({
 
                   <td className={BODY_CELL_STYLE}>
                     <Typography
-                      className={getTransactionColor(tx.type)}
+                      className={getTransactionColor(tx.chartOfAccountsType)}
                       align="right"
                     >
-                      {tx.type === 'expense' ? '-' : '+'}
+                      {isExpenseType(tx.chartOfAccountsType) ? '-' : '+'}
                       {tx.amount.toLocaleString()} 円
                     </Typography>
                   </td>
