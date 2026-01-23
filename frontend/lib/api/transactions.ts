@@ -51,11 +51,13 @@ export async function getTransactions(): Promise<
  * ユーザーの取引一覧をページネーション付きで取得
  * @param page - ページ番号（1から始まる）
  * @param pageSize - 1ページあたりの件数
+ * @param keyword - 検索キーワード（オプション）
  * @returns ページネーション付き取引一覧
  */
 export async function getTransactionsWithPagination(
   page: number,
   pageSize: number,
+  keyword?: string,
 ): Promise<
   ApiResponse<{
     transactions: Transaction[];
@@ -65,6 +67,11 @@ export async function getTransactionsWithPagination(
     hasNextPage: boolean;
   }>
 > {
+  const params: Record<string, any> = { page, pageSize };
+  if (keyword) {
+    params.keyword = keyword;
+  }
+
   return apiClient.get<{
     transactions: Transaction[];
     total: number;
@@ -72,7 +79,7 @@ export async function getTransactionsWithPagination(
     pageSize: number;
     hasNextPage: boolean;
   }>('/api/transactions/paginated', {
-    params: { page, pageSize },
+    params,
   });
 }
 

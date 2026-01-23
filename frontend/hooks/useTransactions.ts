@@ -102,9 +102,13 @@ export function useGetTransactions(): UseQueryResult<
 /**
  * 無限スクロール対応の取引一覧 query
  * @param pageSize - 1ページあたりの件数（デフォルト: 20）
+ * @param keyword - 検索キーワード（オプション）
  * @returns infinite query 結果
  */
-export function useGetInfinityTransactions(pageSize: number = 20) {
+export function useGetInfinityTransactions(
+  pageSize: number = 20,
+  keyword?: string,
+) {
   type PageData = {
     transactions: Transaction[];
     total: number;
@@ -120,9 +124,13 @@ export function useGetInfinityTransactions(pageSize: number = 20) {
     string[],
     number
   >({
-    queryKey: ['transactions', 'infinite', String(pageSize)],
+    queryKey: ['transactions', 'infinite', String(pageSize), keyword ?? ''],
     queryFn: async ({ pageParam }) => {
-      const response = await getTransactionsWithPagination(pageParam, pageSize);
+      const response = await getTransactionsWithPagination(
+        pageParam,
+        pageSize,
+        keyword,
+      );
       if (!response.data) {
         throw new Error(response.error || '取引の取得に失敗しました');
       }

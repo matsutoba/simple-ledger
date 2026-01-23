@@ -11,17 +11,20 @@ import { TransactionFilterBar } from './TransactionFilterBar';
 import { Icon } from '@/components/ui/Icon';
 import { AddTransactionModal } from '../common/AddTransactionModal/AddTransactionModal';
 import { useGetInfinityTransactions } from '@/hooks/useTransactions';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Spinner } from '@/components/ui/Spinner';
 
 export const Tranasctions: React.FC = () => {
+  const [searchValue, setSearchValue] = useState('');
+  const debouncedKeyword = useDebounce(searchValue, 500);
+
   const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } =
-    useGetInfinityTransactions(50);
+    useGetInfinityTransactions(50, debouncedKeyword || undefined);
 
   const { ref: observerTarget, inView } = useInView({
     threshold: 0.1,
   });
 
-  const [searchValue, setSearchValue] = useState('');
   const [categoryValue, setCategoryValue] =
     useState<TransactionFilterCategory>('all');
   const [isOpenAddTransactionModal, setIsOpenAddTransactionModal] =
@@ -33,9 +36,9 @@ export const Tranasctions: React.FC = () => {
 
     const seen = new Set<number>();
     return data.pages
-      .flatMap((page) => page.transactions)
+      .flatMap((page) => page.transactions || [])
       .filter((tx) => {
-        if (seen.has(tx.id)) return false;
+        if (!tx || seen.has(tx.id)) return false;
         seen.add(tx.id);
         return true;
       });
