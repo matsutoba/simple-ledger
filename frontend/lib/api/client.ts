@@ -38,7 +38,7 @@ class ApiClient {
       finalPath = `${path}?${searchParams.toString()}`;
     }
 
-    const { params, ...restOptions } = options || {};
+    const { ...restOptions } = options || {};
     return this.request<T>(finalPath, { ...restOptions, method: 'GET' });
   }
 

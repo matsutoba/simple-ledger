@@ -54,13 +54,17 @@ export const Tranasctions: React.FC = () => {
       return allTransactions;
     }
     if (categoryValue === 'income') {
-      return allTransactions.filter((tx) => isIncomeType(tx.chartOfAccountsType));
+      return allTransactions.filter((tx) =>
+        isIncomeType(tx.chartOfAccountsType),
+      );
     }
     if (categoryValue === 'expense') {
-      return allTransactions.filter((tx) => !isIncomeType(tx.chartOfAccountsType));
+      return allTransactions.filter(
+        (tx) => !isIncomeType(tx.chartOfAccountsType),
+      );
     }
     return allTransactions;
-  }, [data?.pages, categoryValue]);
+  }, [data, categoryValue]);
 
   // useInView を使用した無限スクロール
   useEffect(() => {

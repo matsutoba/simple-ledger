@@ -67,7 +67,7 @@ export async function getTransactionsWithPagination(
     hasNextPage: boolean;
   }>
 > {
-  const params: Record<string, any> = { page, pageSize };
+  const params: Record<string, string | number> = { page, pageSize };
   if (keyword) {
     params.keyword = keyword;
   }

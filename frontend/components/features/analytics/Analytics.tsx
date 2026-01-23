@@ -3,24 +3,28 @@
 import { BlockStack } from '@/components/ui/Stack';
 import { Typography } from '@/components/ui/Typography';
 import { AmountCard } from '../common/AmountCard';
-import { transactionData } from '../dashboard/testdata';
 import { Transaction, TransactionCategoryData } from '@/types/transaction';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { CountCard } from './CountCard';
 import { ExpenseTop5BarChart } from './ExpenseTop5BarChart';
 import { CategoryList } from './CategoryList';
 import { CategoryPieChart } from './CategoryPieChart';
+import { isIncomeType } from '@/lib/utils/accountType';
+import { useGetTransactions } from '@/hooks/useTransactions';
 
 export const Analytics: React.FC = () => {
-  const [transactions, setTransactions] =
-    useState<Transaction[]>(transactionData);
+  const { data } = useGetTransactions();
+  const transactions: Transaction[] = useMemo(
+    () => data?.transactions || [],
+    [data?.transactions],
+  );
 
   const categoryData: TransactionCategoryData = useMemo(() => {
     const incomeByCategory: { [key: string]: number } = {};
     const expenseByCategory: { [key: string]: number } = {};
 
     transactions.forEach((t) => {
-      if (t.type === 'income') {
+      if (isIncomeType(t.chartOfAccountsType)) {
         incomeByCategory[t.description] =
           (incomeByCategory[t.description] || 0) + t.amount;
       } else {

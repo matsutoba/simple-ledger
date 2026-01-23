@@ -12,8 +12,6 @@ interface RecentTransactionListProps {
   transactions: Transaction[];
 }
 
-const HEADER_CELL_STYLE =
-  'border-b border-gray-400 text-gray-700 font-medium px-4 py-2 text-left';
 const BODY_CELL_STYLE = 'border-b border-gray-200 px-4 py-2';
 
 export const RecentTransactionList: React.FC<RecentTransactionListProps> = ({
