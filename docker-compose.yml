@@ -10,6 +10,7 @@ services:
       MYSQL_DATABASE: ledger
       MYSQL_USER: ledger_user
       MYSQL_PASSWORD: ledger_pass
+      TZ: 'Asia/Tokyo'
     ports:
       - "3306:3306"
     volumes:
@@ -45,6 +46,7 @@ services:
       DB_PORT: 3306
       DB_NAME: ledger
       PORT: 8080
+      TZ: 'Asia/Tokyo'
     volumes:
       - ./backend:/app
     ports:
