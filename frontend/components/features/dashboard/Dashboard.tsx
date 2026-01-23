@@ -62,7 +62,7 @@ export const Dashboard: React.FC = () => {
       <AddTransactionModal
         open={isOpenAddTransactionModal}
         onClose={() => setIsOpenAddTransactionModal(false)}
-        onExecute={() => setIsOpenAddTransactionModal(false)}
+        onSuccess={() => setIsOpenAddTransactionModal(false)}
       />
     </>
   );

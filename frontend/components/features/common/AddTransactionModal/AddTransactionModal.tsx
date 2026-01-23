@@ -21,13 +21,13 @@ type TransactionFormData = z.infer<typeof transactionSchema>;
 interface AddTransactionModalProps {
   open: boolean;
   onClose: () => void;
-  onExecute: () => void;
+  onSuccess: () => void;
 }
 
 export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   open,
   onClose,
-  onExecute,
+  onSuccess,
 }) => {
   const { mutate, isPending } = useCreateTransaction();
   const [type, setType] = useState<TransactionType>('expense');
@@ -106,7 +106,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           // フォームをリセット
           resetForm();
           // モーダルを閉じる
-          onExecute();
+          onSuccess();
         },
         onError: (error: unknown) => {
           const errorMessage =

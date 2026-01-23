@@ -19,8 +19,14 @@ export const Tranasctions: React.FC = () => {
   const [searchValue, setSearchValue] = useState('');
   const debouncedKeyword = useDebounce(searchValue, 500);
 
-  const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage } =
-    useGetInfinityTransactions(50, debouncedKeyword || undefined);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    refetch,
+  } = useGetInfinityTransactions(50, debouncedKeyword || undefined);
 
   const { ref: observerTarget, inView } = useInView({
     threshold: 0.1,
@@ -98,7 +104,10 @@ export const Tranasctions: React.FC = () => {
       <AddTransactionModal
         open={isOpenAddTransactionModal}
         onClose={() => setIsOpenAddTransactionModal(false)}
-        onExecute={() => setIsOpenAddTransactionModal(false)}
+        onSuccess={() => {
+          setIsOpenAddTransactionModal(false);
+          refetch();
+        }}
       />
     </>
   );
