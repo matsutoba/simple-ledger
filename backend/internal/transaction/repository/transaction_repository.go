@@ -41,7 +41,7 @@ func (r *TransactionRepository) GetByUserID(userID uint) ([]models.Transaction, 
 	if err := r.db.
 		Preload("ChartOfAccounts").
 		Where("user_id = ?", userID).
-		Order("date DESC").
+		Order("date DESC, created_at DESC").
 		Find(&transactions).Error; err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (r *TransactionRepository) GetByUserIDAndDateRange(
 	if err := r.db.
 		Preload("ChartOfAccounts").
 		Where("user_id = ? AND date BETWEEN ? AND ?", userID, startDate, endDate).
-		Order("date DESC").
+		Order("date DESC, created_at DESC").
 		Find(&transactions).Error; err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (r *TransactionRepository) GetByUserIDWithPagination(userID uint, page, pag
 	if err := r.db.
 		Preload("ChartOfAccounts").
 		Where("user_id = ?", userID).
-		Order("date DESC").
+		Order("date DESC, created_at DESC").
 		Offset(offset).
 		Limit(pageSize).
 		Find(&transactions).Error; err != nil {
@@ -116,7 +116,7 @@ func (r *TransactionRepository) GetByUserIDWithPaginationAndKeyword(userID uint,
 	offset := (page - 1) * pageSize
 	if err := query.
 		Preload("ChartOfAccounts").
-		Order("date DESC").
+		Order("date DESC, created_at DESC").
 		Offset(offset).
 		Limit(pageSize).
 		Find(&transactions).Error; err != nil {
@@ -135,7 +135,7 @@ func (r *TransactionRepository) GetByUserIDAndChartOfAccountsID(
 	if err := r.db.
 		Preload("ChartOfAccounts").
 		Where("user_id = ? AND chart_of_accounts_id = ?", userID, chartOfAccountsID).
-		Order("date DESC").
+		Order("date DESC, created_at DESC").
 		Find(&transactions).Error; err != nil {
 		return nil, err
 	}
