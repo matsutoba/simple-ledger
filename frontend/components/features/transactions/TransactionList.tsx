@@ -39,48 +39,52 @@ export const TransactionList: React.FC<TransactionListProps> = ({
               </tr>
             </thead>
             <tbody>
-              {transactions.map((tx, index) => (
-                <tr
-                  key={tx.id}
-                  className={cn(
-                    'hover:bg-gray-50',
-                    index === 0 && 'border-t border-gray-200',
-                  )}
-                >
-                  <td className={BODY_CELL_STYLE}>
-                    <Typography className="text-sm text-gray-500">
-                      {new Date(tx.date).toLocaleDateString()}
+              {transactions.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-8">
+                    <Typography className="text-gray-500">
+                      取引がありません
                     </Typography>
-                  </td>
-                  <td className={BODY_CELL_STYLE}>
-                    <TransactionTypeIcon type={tx.chartOfAccountsType} />
-                  </td>
-
-                  <td className={BODY_CELL_STYLE}>
-                    <Typography>{tx.description}</Typography>
-                  </td>
-
-                  <td className={BODY_CELL_STYLE}>
-                    <Typography
-                      className={getTransactionColor(tx.chartOfAccountsType)}
-                      align="right"
-                    >
-                      {isExpenseType(tx.chartOfAccountsType) ? '-' : '+'}
-                      {tx.amount.toLocaleString()} 円
-                    </Typography>
-                  </td>
-                  <td className={BODY_CELL_STYLE}>
-                    <IconButton
-                      icon="trash"
-                      size="md"
-                      color="warning"
-                      variant="ghost"
-                      ariaLabel="Delete transaction"
-                      className="cursor-pointer"
-                    />
                   </td>
                 </tr>
-              ))}
+              ) : (
+                transactions.map((tx) => (
+                  <tr key={tx.id} className={cn('hover:bg-gray-50')}>
+                    <td className={BODY_CELL_STYLE}>
+                      <Typography className="text-sm text-gray-500">
+                        {new Date(tx.date).toLocaleDateString()}
+                      </Typography>
+                    </td>
+                    <td className={BODY_CELL_STYLE}>
+                      <TransactionTypeIcon type={tx.chartOfAccountsType} />
+                    </td>
+
+                    <td className={BODY_CELL_STYLE}>
+                      <Typography>{tx.description}</Typography>
+                    </td>
+
+                    <td className={BODY_CELL_STYLE}>
+                      <Typography
+                        className={getTransactionColor(tx.chartOfAccountsType)}
+                        align="right"
+                      >
+                        {isExpenseType(tx.chartOfAccountsType) ? '-' : '+'}
+                        {tx.amount.toLocaleString()} 円
+                      </Typography>
+                    </td>
+                    <td className={BODY_CELL_STYLE}>
+                      <IconButton
+                        icon="trash"
+                        size="md"
+                        color="warning"
+                        variant="ghost"
+                        ariaLabel="Delete transaction"
+                        className="cursor-pointer"
+                      />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

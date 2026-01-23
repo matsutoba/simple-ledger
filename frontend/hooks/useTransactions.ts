@@ -6,7 +6,6 @@ import {
   useInfiniteQuery,
   UseQueryResult,
   UseMutationResult,
-  UseInfiniteQueryResult,
 } from '@tanstack/react-query';
 import {
   createTransaction,
@@ -105,21 +104,24 @@ export function useGetTransactions(): UseQueryResult<
  * @param pageSize - 1ページあたりの件数（デフォルト: 20）
  * @returns infinite query 結果
  */
-export function useGetInfinityTransactions(
-  pageSize: number = 20,
-): UseInfiniteQueryResult<
-  {
+export function useGetInfinityTransactions(pageSize: number = 20) {
+  type PageData = {
     transactions: Transaction[];
     total: number;
     page: number;
     pageSize: number;
     hasNextPage: boolean;
-  },
-  unknown
-> {
-  return useInfiniteQuery({
-    queryKey: ['transactions', 'infinite', pageSize],
-    queryFn: async ({ pageParam = 1 }) => {
+  };
+
+  return useInfiniteQuery<
+    PageData,
+    unknown,
+    { pages: PageData[] },
+    string[],
+    number
+  >({
+    queryKey: ['transactions', 'infinite', String(pageSize)],
+    queryFn: async ({ pageParam }) => {
       const response = await getTransactionsWithPagination(pageParam, pageSize);
       if (!response.data) {
         throw new Error(response.error || '取引の取得に失敗しました');
@@ -127,22 +129,12 @@ export function useGetInfinityTransactions(
       return response.data;
     },
     getNextPageParam: (lastPage) => {
-      // hasNextPageで次のページが存在するかチェック
       if (lastPage.hasNextPage) {
         return lastPage.page + 1;
       }
       return undefined;
     },
     initialPageParam: 1,
-    staleTime: 1000 * 60, // 1分間キャッシュを保持
-  }) as UseInfiniteQueryResult<
-    {
-      transactions: Transaction[];
-      total: number;
-      page: number;
-      pageSize: number;
-      hasNextPage: boolean;
-    },
-    unknown
-  >;
+    staleTime: 1000 * 60,
+  });
 }
