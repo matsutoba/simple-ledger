@@ -48,6 +48,35 @@ export async function getTransactions(): Promise<
 }
 
 /**
+ * ユーザーの取引一覧をページネーション付きで取得
+ * @param page - ページ番号（1から始まる）
+ * @param pageSize - 1ページあたりの件数
+ * @returns ページネーション付き取引一覧
+ */
+export async function getTransactionsWithPagination(
+  page: number,
+  pageSize: number,
+): Promise<
+  ApiResponse<{
+    transactions: Transaction[];
+    total: number;
+    page: number;
+    pageSize: number;
+    hasNextPage: boolean;
+  }>
+> {
+  return apiClient.get<{
+    transactions: Transaction[];
+    total: number;
+    page: number;
+    pageSize: number;
+    hasNextPage: boolean;
+  }>('/api/transactions/paginated', {
+    params: { page, pageSize },
+  });
+}
+
+/**
  * 取引を削除
  * @param id - 取引ID
  * @returns 削除結果
