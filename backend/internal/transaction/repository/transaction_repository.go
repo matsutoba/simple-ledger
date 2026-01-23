@@ -93,6 +93,39 @@ func (r *TransactionRepository) GetByUserIDWithPagination(userID uint, page, pag
 	return transactions, total, nil
 }
 
+// GetByUserIDWithPaginationAndKeyword: ユーザーIDで取引一覧をページネーション・キーワード検索付きで取得
+func (r *TransactionRepository) GetByUserIDWithPaginationAndKeyword(userID uint, page, pageSize int, keyword string) ([]models.Transaction, int64, error) {
+	var transactions []models.Transaction
+	var total int64
+
+	query := r.db.Where("user_id = ?", userID)
+
+	// キーワード検索（amountとdescriptionで部分一致）
+	if keyword != "" {
+		query = query.Where("description LIKE ? OR CAST(amount AS CHAR) LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+	}
+
+	// 全件数を取得
+	if err := query.
+		Model(&models.Transaction{}).
+		Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// ページネーション付きでデータを取得
+	offset := (page - 1) * pageSize
+	if err := query.
+		Preload("ChartOfAccounts").
+		Order("date DESC").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&transactions).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return transactions, total, nil
+}
+
 // GetByUserIDAndChartOfAccountsID: ユーザーIDと勘定科目IDで取引一覧を取得
 func (r *TransactionRepository) GetByUserIDAndChartOfAccountsID(
 	userID uint,

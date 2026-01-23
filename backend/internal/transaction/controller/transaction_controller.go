@@ -136,7 +136,16 @@ func (ctrl *transactionController) GetByUserIDWithPagination() gin.HandlerFunc {
 			return
 		}
 
-		result, err := ctrl.service.GetByUserIDWithPagination(userID.(uint), req.Page, req.PageSize)
+		var result interface{}
+		var err error
+
+		// キーワードが指定されている場合は検索を実行
+		if req.Keyword != "" {
+			result, err = ctrl.service.GetByUserIDWithPaginationAndKeyword(userID.(uint), req.Page, req.PageSize, req.Keyword)
+		} else {
+			result, err = ctrl.service.GetByUserIDWithPagination(userID.(uint), req.Page, req.PageSize)
+		}
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Failed to fetch transactions",
