@@ -14,7 +14,6 @@ import { EditTransactionModal } from '../common/TransactionModal/EditTransaction
 import { useGetInfinityTransactions } from '@/hooks/useTransactions';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Spinner } from '@/components/ui/Spinner';
-import { isIncomeType } from '@/lib/utils/accountType';
 
 export const Tranasctions: React.FC = () => {
   const [searchValue, setSearchValue] = useState('');
@@ -58,14 +57,27 @@ export const Tranasctions: React.FC = () => {
     if (categoryValue === 'all') {
       return allTransactions;
     }
+    // journalEntriesから費用/収入をフィルタ
     if (categoryValue === 'income') {
       return allTransactions.filter((tx) =>
-        isIncomeType(tx.chartOfAccountsType),
+        tx.journalEntries?.some((je) => {
+          const isCredit = je.type === 'credit';
+          const isRevenueAccount =
+            je.chartOfAccounts?.type === 'revenue' ||
+            je.chartOfAccounts?.type === 'liability';
+          return isCredit && isRevenueAccount;
+        }),
       );
     }
     if (categoryValue === 'expense') {
-      return allTransactions.filter(
-        (tx) => !isIncomeType(tx.chartOfAccountsType),
+      return allTransactions.filter((tx) =>
+        tx.journalEntries?.some((je) => {
+          const isDebit = je.type === 'debit';
+          const isExpenseAccount =
+            je.chartOfAccounts?.type === 'expense' ||
+            je.chartOfAccounts?.type === 'asset';
+          return isDebit && isExpenseAccount;
+        }),
       );
     }
     return allTransactions;
@@ -129,15 +141,7 @@ export const Tranasctions: React.FC = () => {
         <EditTransactionModal
           open={isOpenEditTransactionModal}
           transactionId={selectedTransaction.id}
-          initialData={{
-            type: isIncomeType(selectedTransaction.chartOfAccountsType)
-              ? 'income'
-              : 'expense',
-            date: selectedTransaction.date,
-            category: selectedTransaction.chartOfAccountsId.toString(),
-            description: selectedTransaction.description,
-            amount: selectedTransaction.amount.toString(),
-          }}
+          initialData={selectedTransaction}
           onClose={() => {
             setIsOpenEditTransactionModal(false);
             setSelectedTransaction(null);
