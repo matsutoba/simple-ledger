@@ -6,6 +6,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { TRANSACTION_GRAPH_COLORS } from '@/constants/transaction';
 import { Typography } from '@/components/ui/Typography';
 import { BlockStack, InlineStack } from '@/components/ui/Stack';
+import { AccountTypeName } from '@/constants/chartOfAccounts';
 
 interface CategoryPieChartProps {
   title: string;
@@ -28,8 +29,10 @@ export const CategoryPieChart: React.FC<CategoryPieChartProps> = ({
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
+                label={(
+                  entry: TransactionCategoryDataItem & { percent: number },
+                ) =>
+                  `${AccountTypeName[entry.type]} ${(entry.percent * 100).toFixed(0)}%`
                 }
                 outerRadius={80}
                 fill="#8884d8"
