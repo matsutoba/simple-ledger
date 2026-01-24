@@ -1,4 +1,5 @@
 import { AccountType } from '@/types/chartOfAccount';
+import { Transaction } from '@/types/transaction';
 
 /**
  * 勘定科目タイプが収入関連（資産、純資産、収益）かどうかを判定
@@ -16,4 +17,23 @@ export const isIncomeType = (type: AccountType): boolean => {
  */
 export const isExpenseType = (type: AccountType): boolean => {
   return !isIncomeType(type);
+};
+
+/**
+ * 取引一覧から収支を計算
+ * @param transactions 取引一覧
+ * @returns 総収入、総支出、残高
+ */
+export const calculateBalance = (transactions: Transaction[]) => {
+  const totalIncome = transactions
+    .filter((tx) => isIncomeType(tx.chartOfAccountsType))
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const totalExpense = transactions
+    .filter((tx) => isExpenseType(tx.chartOfAccountsType))
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const balance = Math.abs(totalIncome - totalExpense);
+
+  return { totalIncome, totalExpense, balance };
 };

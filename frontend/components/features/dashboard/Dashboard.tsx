@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { BlockStack, InlineStack } from '@/components/ui/Stack';
 import { TrendCard } from './TrendCard';
 import { BalanceTrendChart } from './BalanceTrendChart';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { MonthlyBalanceChart } from './MonthlyBalanceChart';
 import { RecentTransactionList } from './RecentTransactionList';
 import { Typography } from '@/components/ui/Typography';
@@ -13,7 +13,7 @@ import { AddTransactionModal } from '../common/AddTransactionModal/AddTransactio
 import { useGetTransactions } from '@/hooks/useTransactions';
 import { Spinner } from '@/components/ui/Spinner';
 import { Transaction } from '@/types/transaction';
-import { isIncomeType } from '@/lib/utils/accountType';
+import { calculateBalance } from '@/lib/utils/accountType';
 
 export const Dashboard: React.FC = () => {
   const [isOpenAddTransactionModal, setIsOpenAddTransactionModal] =
@@ -22,18 +22,10 @@ export const Dashboard: React.FC = () => {
   const { data, isFetching, refetch } = useGetTransactions();
   const transactions: Transaction[] = data?.transactions || [];
 
-  // 総収入の計算
-  const totalIncome = transactions
-    .filter((tx) => isIncomeType(tx.chartOfAccountsType))
-    .reduce((sum, tx) => sum + tx.amount, 0);
-
-  // 総支出の計算
-  const totalExpense = transactions
-    .filter((tx) => !isIncomeType(tx.chartOfAccountsType))
-    .reduce((sum, tx) => sum + tx.amount, 0);
-
-  // 残高の計算
-  const balance = Math.abs(totalIncome - totalExpense);
+  const { totalIncome, totalExpense, balance } = useMemo(
+    () => calculateBalance(transactions),
+    [transactions],
+  );
 
   return (
     <>
