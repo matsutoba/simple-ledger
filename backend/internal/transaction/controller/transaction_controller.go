@@ -48,8 +48,8 @@ func (ctrl *transactionController) Create() gin.HandlerFunc {
 
 		result, err := ctrl.service.Create(userID.(uint), &req)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to create transaction",
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
 			})
 			return
 		}
@@ -79,15 +79,15 @@ func (ctrl *transactionController) GetByID() gin.HandlerFunc {
 
 		result, err := ctrl.service.GetByID(uint(id), userID.(uint))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to fetch transaction",
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
 			})
 			return
 		}
 
 		if result == nil {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Unauthorized to access this transaction",
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Transaction not found",
 			})
 			return
 		}
@@ -187,15 +187,15 @@ func (ctrl *transactionController) Update() gin.HandlerFunc {
 
 		result, err := ctrl.service.Update(uint(id), userID.(uint), &req)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to update transaction",
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
 			})
 			return
 		}
 
 		if result == nil {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Unauthorized to update this transaction",
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Transaction not found",
 			})
 			return
 		}
@@ -224,8 +224,8 @@ func (ctrl *transactionController) Delete() gin.HandlerFunc {
 		}
 
 		if err := ctrl.service.Delete(uint(id), userID.(uint)); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to delete transaction",
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
 			})
 			return
 		}
