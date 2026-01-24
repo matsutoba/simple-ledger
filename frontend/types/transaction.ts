@@ -1,3 +1,5 @@
+import { AccountType } from './chartOfAccount';
+
 export type TransactionType = 'income' | 'expense';
 export type TrendType = TransactionType | 'balance';
 export type ChartOfAccountsType =
@@ -24,7 +26,7 @@ export interface Transaction {
 export type TransactionFilterCategory = TransactionType | 'all';
 
 export interface TransactionCategoryDataItem {
-  name: string;
+  type: AccountType;
   value: number;
 }
 

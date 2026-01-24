@@ -12,6 +12,7 @@ import {
 import { Typography } from '@/components/ui/Typography';
 import { formControlColors } from '@/theme/colors';
 import { BlockStack, InlineStack } from '@/components/ui/Stack';
+import { AccountTypeName } from '@/constants/chartOfAccounts';
 
 interface CategoryListProps {
   type: TransactionType;
@@ -48,7 +49,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({
                       ],
                   }}
                 />
-                <Typography>{item.name}</Typography>
+                <Typography>{AccountTypeName[item.type]}</Typography>
               </InlineStack>
               <Typography className={textColor}>
                 {item.value.toLocaleString()}円
