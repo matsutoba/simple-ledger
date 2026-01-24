@@ -7,10 +7,12 @@ import (
 	"testing"
 	"time"
 
+	jerepository "simple-ledger/internal/journal_entry/repository"
+	jeservice "simple-ledger/internal/journal_entry/service"
 	"simple-ledger/internal/models"
 	"simple-ledger/internal/transaction/dto"
-	"simple-ledger/internal/transaction/repository"
-	"simple-ledger/internal/transaction/service"
+	txrepository "simple-ledger/internal/transaction/repository"
+	txservice "simple-ledger/internal/transaction/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -27,6 +29,9 @@ func setupControllerTestDB() *gorm.DB {
 		panic(err)
 	}
 	if err := db.AutoMigrate(&models.Transaction{}); err != nil {
+		panic(err)
+	}
+	if err := db.AutoMigrate(&models.JournalEntry{}); err != nil {
 		panic(err)
 	}
 
@@ -55,18 +60,18 @@ func setupControllerTestDB() *gorm.DB {
 
 func TestGetByUserIDWithPaginationController(t *testing.T) {
 	db := setupControllerTestDB()
-	repo := repository.NewTransactionRepository(db)
-	svc := service.NewTransactionService(repo)
+	txRepo := txrepository.NewTransactionRepository(db)
+	jeRepo := jerepository.NewJournalEntryRepository(db)
+	jeSvc := jeservice.NewJournalEntryService(jeRepo)
+	svc := txservice.NewTransactionService(txRepo, jeRepo, jeSvc)
 	ctrl := NewTransactionController(svc)
 
 	// テストデータの作成（30件）
 	for i := 1; i <= 30; i++ {
 		transaction := models.Transaction{
-			UserID:            1,
-			Date:              time.Date(2024, 12, i%28+1, 0, 0, 0, 0, time.UTC),
-			ChartOfAccountsID: 1,
-			Amount:            10000 * i,
-			Description:       "テスト取引",
+			UserID:      1,
+			Date:        time.Date(2024, 12, i%28+1, 0, 0, 0, 0, time.UTC),
+			Description: "テスト取引",
 		}
 		db.Create(&transaction)
 	}
@@ -112,8 +117,10 @@ func TestGetByUserIDWithPaginationController(t *testing.T) {
 
 func TestGetByUserIDWithPaginationMissingParams(t *testing.T) {
 	db := setupControllerTestDB()
-	repo := repository.NewTransactionRepository(db)
-	svc := service.NewTransactionService(repo)
+	txRepo := txrepository.NewTransactionRepository(db)
+	jeRepo := jerepository.NewJournalEntryRepository(db)
+	jeSvc := jeservice.NewJournalEntryService(jeRepo)
+	svc := txservice.NewTransactionService(txRepo, jeRepo, jeSvc)
 	ctrl := NewTransactionController(svc)
 
 	// ページパラメータなし
@@ -130,8 +137,10 @@ func TestGetByUserIDWithPaginationMissingParams(t *testing.T) {
 
 func TestGetByUserIDWithPaginationMissingUserID(t *testing.T) {
 	db := setupControllerTestDB()
-	repo := repository.NewTransactionRepository(db)
-	svc := service.NewTransactionService(repo)
+	txRepo := txrepository.NewTransactionRepository(db)
+	jeRepo := jerepository.NewJournalEntryRepository(db)
+	jeSvc := jeservice.NewJournalEntryService(jeRepo)
+	svc := txservice.NewTransactionService(txRepo, jeRepo, jeSvc)
 	ctrl := NewTransactionController(svc)
 
 	// userID context なし

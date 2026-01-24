@@ -4,8 +4,10 @@ import (
 	"testing"
 	"time"
 
+	jerepository "simple-ledger/internal/journal_entry/repository"
+	jeservice "simple-ledger/internal/journal_entry/service"
 	"simple-ledger/internal/models"
-	"simple-ledger/internal/transaction/repository"
+	txrepository "simple-ledger/internal/transaction/repository"
 
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
@@ -21,6 +23,9 @@ func setupServiceTestDB() *gorm.DB {
 		panic(err)
 	}
 	if err := db.AutoMigrate(&models.Transaction{}); err != nil {
+		panic(err)
+	}
+	if err := db.AutoMigrate(&models.JournalEntry{}); err != nil {
 		panic(err)
 	}
 
@@ -49,17 +54,17 @@ func setupServiceTestDB() *gorm.DB {
 
 func TestGetByUserIDWithPagination(t *testing.T) {
 	db := setupServiceTestDB()
-	repo := repository.NewTransactionRepository(db)
-	svc := NewTransactionService(repo)
+	txRepo := txrepository.NewTransactionRepository(db)
+	jeRepo := jerepository.NewJournalEntryRepository(db)
+	jeSvc := jeservice.NewJournalEntryService(jeRepo)
+	svc := NewTransactionService(txRepo, jeRepo, jeSvc)
 
 	// テストデータの作成（30件）
 	for i := 1; i <= 30; i++ {
 		transaction := models.Transaction{
-			UserID:            1,
-			Date:              time.Date(2024, 12, i%28+1, 0, 0, 0, 0, time.UTC),
-			ChartOfAccountsID: 1,
-			Amount:            10000 * i,
-			Description:       "テスト取引",
+			UserID:      1,
+			Date:        time.Date(2024, 12, i%28+1, 0, 0, 0, 0, time.UTC),
+			Description: "テスト取引",
 		}
 		db.Create(&transaction)
 	}
@@ -114,17 +119,17 @@ func TestGetByUserIDWithPagination(t *testing.T) {
 
 func TestGetByUserIDWithPaginationEdgeCase(t *testing.T) {
 	db := setupServiceTestDB()
-	repo := repository.NewTransactionRepository(db)
-	svc := NewTransactionService(repo)
+	txRepo := txrepository.NewTransactionRepository(db)
+	jeRepo := jerepository.NewJournalEntryRepository(db)
+	jeSvc := jeservice.NewJournalEntryService(jeRepo)
+	svc := NewTransactionService(txRepo, jeRepo, jeSvc)
 
 	// テストデータの作成（5件）
 	for i := 1; i <= 5; i++ {
 		transaction := models.Transaction{
-			UserID:            1,
-			Date:              time.Date(2024, 12, i, 0, 0, 0, 0, time.UTC),
-			ChartOfAccountsID: 1,
-			Amount:            10000 * i,
-			Description:       "テスト取引",
+			UserID:      1,
+			Date:        time.Date(2024, 12, i, 0, 0, 0, 0, time.UTC),
+			Description: "テスト取引",
 		}
 		db.Create(&transaction)
 	}
