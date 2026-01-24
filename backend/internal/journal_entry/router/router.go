@@ -18,14 +18,14 @@ func SetupJournalEntryRoutes(api *gin.RouterGroup, db *gorm.DB) {
 	ctrl := controller.NewJournalEntryController(svc)
 
 	// 仕訳エントリーグループ
-	journalEntryGroup := api.Group("/transactions/:transactionId/journal-entries")
+	journalEntryGroup := api.Group("/journal-entries")
 	journalEntryGroup.Use(middleware.AuthMiddleware())
 	{
-		// POST: 仕訳エントリーを作成
-		journalEntryGroup.POST("", ctrl.CreateJournalEntry)
+		// POST: 取引に仕訳エントリーを作成
+		journalEntryGroup.POST("/transactions/:transactionId", ctrl.CreateJournalEntry)
 
 		// GET: 取引の全ての仕訳エントリーを取得
-		journalEntryGroup.GET("", ctrl.GetJournalEntriesByTransactionID)
+		journalEntryGroup.GET("/transactions/:transactionId", ctrl.GetJournalEntriesByTransactionID)
 
 		// GET: 仕訳エントリーをIDで取得
 		journalEntryGroup.GET("/:id", ctrl.GetJournalEntryByID)
@@ -37,6 +37,6 @@ func SetupJournalEntryRoutes(api *gin.RouterGroup, db *gorm.DB) {
 		journalEntryGroup.DELETE("/:id", ctrl.DeleteJournalEntry)
 
 		// GET: 取引のバランスを確認
-		journalEntryGroup.GET("/validate", ctrl.ValidateTransaction)
+		journalEntryGroup.GET("/transactions/:transactionId/validate", ctrl.ValidateTransaction)
 	}
 }
