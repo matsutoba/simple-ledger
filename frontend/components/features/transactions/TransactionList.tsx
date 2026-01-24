@@ -1,15 +1,16 @@
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/components/shadcn/ui/utils';
-import { BlockStack } from '@/components/ui/Stack';
+import { BlockStack, InlineStack } from '@/components/ui/Stack';
 import { Typography } from '@/components/ui/Typography';
 import { ChartOfAccountsType, Transaction } from '@/types/transaction';
 import { TRANSACTION_TYPE_COLORS } from '@/constants';
-import { TransactionTypeIcon } from '../common/TransactionTypeIcon';
 import { IconButton } from '@/components/ui/IconButton';
 import { isExpenseType } from '@/lib/utils/accountType';
+import { CorrectionBadge } from './CorrectionBadge';
 
 interface TransactionListProps {
   transactions: Transaction[];
+  onEditClick: (transaction: Transaction) => void;
 }
 
 const HEADER_CELL_STYLE =
@@ -18,9 +19,14 @@ const BODY_CELL_STYLE = 'border-b border-gray-200 px-4 py-2';
 
 export const TransactionList: React.FC<TransactionListProps> = ({
   transactions,
+  onEditClick,
 }) => {
   const getTransactionColor = (type: ChartOfAccountsType) =>
     TRANSACTION_TYPE_COLORS[isExpenseType(type) ? 'expense' : 'income'];
+
+  const isCorrectionTransaction = (description: string): boolean => {
+    return description.includes('【訂正】');
+  };
 
   return (
     <Card>
@@ -30,7 +36,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             <thead>
               <tr>
                 <th className={HEADER_CELL_STYLE}>日付</th>
-                <th className={HEADER_CELL_STYLE}>カテゴリ</th>
+                <th className={HEADER_CELL_STYLE}>勘定科目</th>
                 <th className={HEADER_CELL_STYLE}>説明</th>
                 <th className={HEADER_CELL_STYLE} align="right">
                   金額
@@ -49,18 +55,32 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                 </tr>
               ) : (
                 transactions.map((tx) => (
-                  <tr key={tx.id} className={cn('hover:bg-gray-50')}>
+                  <tr
+                    key={tx.id}
+                    className={cn(
+                      'hover:bg-gray-50',
+                      isCorrectionTransaction(tx.description) &&
+                        'bg-yellow-50 border-l-4 border-yellow-400',
+                    )}
+                  >
                     <td className={BODY_CELL_STYLE}>
                       <Typography className="text-sm text-gray-500">
                         {new Date(tx.date).toLocaleDateString()}
                       </Typography>
                     </td>
                     <td className={BODY_CELL_STYLE}>
-                      <TransactionTypeIcon type={tx.chartOfAccountsType} />
+                      <Typography className="text-sm font-medium">
+                        {tx.chartOfAccountsName}
+                      </Typography>
                     </td>
 
                     <td className={BODY_CELL_STYLE}>
-                      <Typography>{tx.description}</Typography>
+                      <InlineStack alignItems="center" gap="sm">
+                        <CorrectionBadge
+                          showBadge={isCorrectionTransaction(tx.description)}
+                        />
+                        <Typography>{tx.description}</Typography>
+                      </InlineStack>
                     </td>
 
                     <td className={BODY_CELL_STYLE}>
@@ -80,6 +100,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                         variant="ghost"
                         ariaLabel="Edit transaction"
                         className="cursor-pointer"
+                        onClick={() => onEditClick(tx)}
                       />
                     </td>
                   </tr>

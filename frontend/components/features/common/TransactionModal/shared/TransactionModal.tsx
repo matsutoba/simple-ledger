@@ -12,39 +12,63 @@ import { z } from 'zod';
 import { transactionSchema } from './transaction_schema';
 import { SelectChartOfAccounts } from './SelectChartOfAccounts';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
-import { useCreateTransaction } from '@/hooks/useTransactions';
 import { Spinner } from '@/components/ui/Spinner';
-import { showSuccessToast, showErrorToast } from '@/components/ui/Toast';
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
-interface AddTransactionModalProps {
+interface TransactionModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  mode: 'create' | 'edit';
+  onSubmit: (formData: {
+    type: TransactionType;
+    date: string;
+    category: string;
+    description: string;
+    amount: string;
+  }) => void;
+  isPending: boolean;
+  initialData?: {
+    type: TransactionType;
+    date: string;
+    category: string;
+    description: string;
+    amount: string;
+  };
 }
 
-export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
+export const TransactionModal: React.FC<TransactionModalProps> = ({
   open,
   onClose,
   onSuccess,
+  mode,
+  onSubmit,
+  isPending,
+  initialData,
 }) => {
-  const { mutate, isPending } = useCreateTransaction();
-  const [type, setType] = useState<TransactionType>('expense');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
+  const isEdit = mode === 'edit';
+  const defaultType = initialData?.type || 'expense';
+  const defaultDate =
+    initialData?.date || new Date().toISOString().split('T')[0];
+
+  const [type, setType] = useState<TransactionType>(defaultType);
+  const [date, setDate] = useState(defaultDate);
+  const [category, setCategory] = useState(initialData?.category || '');
+  const [description, setDescription] = useState(
+    initialData?.description || '',
+  );
+  const [amount, setAmount] = useState(initialData?.amount || '');
   const [errors, setErrors] = useState<
     Partial<Record<keyof TransactionFormData, string>>
   >({});
 
   const resetForm = () => {
-    setType('expense');
-    setDate(new Date().toISOString().split('T')[0]);
-    setCategory('');
-    setDescription('');
-    setAmount('');
+    setType(defaultType);
+    setDate(defaultDate);
+    setCategory(initialData?.category || '');
+    setDescription(initialData?.description || '');
+    setAmount(initialData?.amount || '');
     setErrors({});
   };
 
@@ -68,7 +92,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // zodで入力をバリデーション
     const result = transactionSchema.safeParse({
       type,
       date,
@@ -78,7 +101,6 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     });
 
     if (!result.success) {
-      // エラーをマッピング
       const fieldErrors: Partial<Record<keyof TransactionFormData, string>> =
         {};
       result.error.issues.forEach((error) => {
@@ -89,53 +111,38 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       return;
     }
 
-    // バリデーション成功時
     setErrors({});
-
-    // 取引データを保存
-    mutate(
-      {
-        date,
-        chartOfAccountsId: parseInt(category, 10),
-        amount: parseInt(amount, 10),
-        description,
-      } as const satisfies Parameters<typeof mutate>[0],
-      {
-        onSuccess: () => {
-          showSuccessToast('取引を保存しました');
-          // フォームをリセット
-          resetForm();
-          // モーダルを閉じる
-          onSuccess();
-        },
-        onError: (error: unknown) => {
-          const errorMessage =
-            error instanceof Error ? error.message : '取引の作成に失敗しました';
-          showErrorToast(errorMessage);
-        },
-      },
-    );
+    onSubmit({ type, date, category, description, amount });
   };
+
+  const title = isEdit ? '取引を編集' : '取引を追加';
+  const modalDescription = isEdit
+    ? '取引の詳細を編集してください。'
+    : '取引の詳細を入力してください。';
+  const buttonLabel = isEdit ? '更新' : '保存';
+  const successMessage = isEdit ? '取引を更新しました' : '取引を保存しました';
 
   return (
     <Modal
       isOpen={open}
       size="medium"
       onOpenChange={handleClose}
-      title="取引を追加"
-      description="取引の詳細を入力してください。"
+      title={title}
+      description={modalDescription}
       footer={
         <div className="grid grid-cols-2 gap-3 w-full">
           <Button onClick={handleClose} variant="outline">
             キャンセル
           </Button>
           <Button onClick={handleSubmit} disabled={isPending}>
-            保存
+            {buttonLabel}
           </Button>
         </div>
       }
     >
-      {isPending && <Spinner fullscreen label="保存中..." />}
+      {isPending && (
+        <Spinner fullscreen label={isEdit ? '更新中...' : '保存中...'} />
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <BlockStack gap="sm">
           <Typography variant="small">種別</Typography>
@@ -144,11 +151,13 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               type="income"
               selected={type === 'income'}
               onClick={() => handleTypeChange('income')}
+              disabled={isEdit}
             />
             <TransactionTypeButton
               type="expense"
               selected={type === 'expense'}
               onClick={() => handleTypeChange('expense')}
+              disabled={isEdit}
             />
           </div>
         </BlockStack>
