@@ -4,7 +4,6 @@ import { BlockStack } from '@/components/ui/Stack';
 import { Typography } from '@/components/ui/Typography';
 import { ChartOfAccountsType, Transaction } from '@/types/transaction';
 import { TRANSACTION_TYPE_COLORS } from '@/constants';
-import { TransactionTypeIcon } from '../common/TransactionTypeIcon';
 import { IconButton } from '@/components/ui/IconButton';
 import { isExpenseType } from '@/lib/utils/accountType';
 
@@ -24,6 +23,10 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   const getTransactionColor = (type: ChartOfAccountsType) =>
     TRANSACTION_TYPE_COLORS[isExpenseType(type) ? 'expense' : 'income'];
 
+  const isCorrectionTransaction = (description: string): boolean => {
+    return description.includes('【訂正】');
+  };
+
   return (
     <Card>
       <BlockStack gap="md">
@@ -32,7 +35,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
             <thead>
               <tr>
                 <th className={HEADER_CELL_STYLE}>日付</th>
-                <th className={HEADER_CELL_STYLE}>カテゴリ</th>
+                <th className={HEADER_CELL_STYLE}>勘定科目</th>
                 <th className={HEADER_CELL_STYLE}>説明</th>
                 <th className={HEADER_CELL_STYLE} align="right">
                   金額
@@ -51,18 +54,36 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                 </tr>
               ) : (
                 transactions.map((tx) => (
-                  <tr key={tx.id} className={cn('hover:bg-gray-50')}>
+                  <tr
+                    key={tx.id}
+                    className={cn(
+                      'hover:bg-gray-50',
+                      isCorrectionTransaction(tx.description) &&
+                        'bg-yellow-50 border-l-4 border-yellow-400',
+                    )}
+                  >
                     <td className={BODY_CELL_STYLE}>
                       <Typography className="text-sm text-gray-500">
                         {new Date(tx.date).toLocaleDateString()}
                       </Typography>
                     </td>
                     <td className={BODY_CELL_STYLE}>
-                      <TransactionTypeIcon type={tx.chartOfAccountsType} />
+                      <div className="flex items-center gap-2">
+                        <Typography className="text-sm font-medium">
+                          {tx.chartOfAccountsName}
+                        </Typography>
+                      </div>
                     </td>
 
                     <td className={BODY_CELL_STYLE}>
-                      <Typography>{tx.description}</Typography>
+                      <div className="flex items-center gap-2">
+                        {isCorrectionTransaction(tx.description) && (
+                          <span className="bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded font-medium whitespace-nowrap">
+                            訂正
+                          </span>
+                        )}
+                        <Typography>{tx.description}</Typography>
+                      </div>
                     </td>
 
                     <td className={BODY_CELL_STYLE}>
