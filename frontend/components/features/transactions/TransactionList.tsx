@@ -1,11 +1,12 @@
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/components/shadcn/ui/utils';
-import { BlockStack } from '@/components/ui/Stack';
+import { BlockStack, InlineStack } from '@/components/ui/Stack';
 import { Typography } from '@/components/ui/Typography';
 import { ChartOfAccountsType, Transaction } from '@/types/transaction';
 import { TRANSACTION_TYPE_COLORS } from '@/constants';
 import { IconButton } from '@/components/ui/IconButton';
 import { isExpenseType } from '@/lib/utils/accountType';
+import { CorrectionBadge } from './CorrectionBadge';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -68,22 +69,18 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       </Typography>
                     </td>
                     <td className={BODY_CELL_STYLE}>
-                      <div className="flex items-center gap-2">
-                        <Typography className="text-sm font-medium">
-                          {tx.chartOfAccountsName}
-                        </Typography>
-                      </div>
+                      <Typography className="text-sm font-medium">
+                        {tx.chartOfAccountsName}
+                      </Typography>
                     </td>
 
                     <td className={BODY_CELL_STYLE}>
-                      <div className="flex items-center gap-2">
-                        {isCorrectionTransaction(tx.description) && (
-                          <span className="bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded font-medium whitespace-nowrap">
-                            訂正
-                          </span>
-                        )}
+                      <InlineStack alignItems="center" gap="sm">
+                        <CorrectionBadge
+                          showBadge={isCorrectionTransaction(tx.description)}
+                        />
                         <Typography>{tx.description}</Typography>
-                      </div>
+                      </InlineStack>
                     </td>
 
                     <td className={BODY_CELL_STYLE}>
