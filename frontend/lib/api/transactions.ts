@@ -209,5 +209,3 @@ export async function validateTransaction(
     `/api/journal-entries/transactions/${transactionId}/validate`,
   );
 }
-
-export type { Transaction, TransactionResponse };
