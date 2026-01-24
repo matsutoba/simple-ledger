@@ -10,6 +10,7 @@ import { isExpenseType } from '@/lib/utils/accountType';
 
 interface TransactionListProps {
   transactions: Transaction[];
+  onEditClick: (transaction: Transaction) => void;
 }
 
 const HEADER_CELL_STYLE =
@@ -18,6 +19,7 @@ const BODY_CELL_STYLE = 'border-b border-gray-200 px-4 py-2';
 
 export const TransactionList: React.FC<TransactionListProps> = ({
   transactions,
+  onEditClick,
 }) => {
   const getTransactionColor = (type: ChartOfAccountsType) =>
     TRANSACTION_TYPE_COLORS[isExpenseType(type) ? 'expense' : 'income'];
@@ -80,6 +82,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                         variant="ghost"
                         ariaLabel="Edit transaction"
                         className="cursor-pointer"
+                        onClick={() => onEditClick(tx)}
                       />
                     </td>
                   </tr>

@@ -10,6 +10,7 @@ import { TransactionList } from './TransactionList';
 import { TransactionFilterBar } from './TransactionFilterBar';
 import { Icon } from '@/components/ui/Icon';
 import { AddTransactionModal } from '../common/TransactionModal/AddTransactionModal';
+import { EditTransactionModal } from '../common/TransactionModal/EditTransactionModal';
 import { useGetInfinityTransactions } from '@/hooks/useTransactions';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Spinner } from '@/components/ui/Spinner';
@@ -36,6 +37,10 @@ export const Tranasctions: React.FC = () => {
     useState<TransactionFilterCategory>('all');
   const [isOpenAddTransactionModal, setIsOpenAddTransactionModal] =
     useState(false);
+  const [isOpenEditTransactionModal, setIsOpenEditTransactionModal] =
+    useState(false);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
 
   // 全ページのトランザクションを統合して重複を除外し、categoryValueに基づいてフィルタ
   const transactions: Transaction[] = useMemo(() => {
@@ -92,7 +97,13 @@ export const Tranasctions: React.FC = () => {
           categoryValue={categoryValue}
           onCategoryChange={setCategoryValue}
         />
-        <TransactionList transactions={transactions} />
+        <TransactionList
+          transactions={transactions}
+          onEditClick={(tx) => {
+            setSelectedTransaction(tx);
+            setIsOpenEditTransactionModal(true);
+          }}
+        />
 
         {/* 無限スクロール検出用の要素 */}
         <div ref={observerTarget} className="py-8 flex justify-center">
@@ -113,6 +124,31 @@ export const Tranasctions: React.FC = () => {
           refetch();
         }}
       />
+
+      {selectedTransaction && (
+        <EditTransactionModal
+          open={isOpenEditTransactionModal}
+          transactionId={selectedTransaction.id}
+          initialData={{
+            type: isIncomeType(selectedTransaction.chartOfAccountsType)
+              ? 'income'
+              : 'expense',
+            date: selectedTransaction.date,
+            category: selectedTransaction.chartOfAccountsId.toString(),
+            description: selectedTransaction.description,
+            amount: selectedTransaction.amount.toString(),
+          }}
+          onClose={() => {
+            setIsOpenEditTransactionModal(false);
+            setSelectedTransaction(null);
+          }}
+          onSuccess={() => {
+            setIsOpenEditTransactionModal(false);
+            setSelectedTransaction(null);
+            refetch();
+          }}
+        />
+      )}
     </>
   );
 };
