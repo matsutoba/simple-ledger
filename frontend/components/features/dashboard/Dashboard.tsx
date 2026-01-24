@@ -9,7 +9,7 @@ import { MonthlyBalanceChart } from './MonthlyBalanceChart';
 import { RecentTransactionList } from './RecentTransactionList';
 import { Typography } from '@/components/ui/Typography';
 import { Icon } from '@/components/ui/Icon';
-import { AddTransactionModal } from '../common/AddTransactionModal/AddTransactionModal';
+import { AddTransactionModal } from '../common/TransactionModal/AddTransactionModal';
 import { useGetTransactions } from '@/hooks/useTransactions';
 import { Spinner } from '@/components/ui/Spinner';
 import { Transaction } from '@/types/transaction';

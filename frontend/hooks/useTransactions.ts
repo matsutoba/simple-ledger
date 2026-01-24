@@ -9,11 +9,14 @@ import {
 } from '@tanstack/react-query';
 import {
   createTransaction,
+  updateTransaction,
   getTransactions,
   getTransactionsWithPagination,
   deleteTransaction,
   CreateTransactionRequest,
   CreateTransactionResponse,
+  UpdateTransactionRequest,
+  UpdateTransactionResponse,
   Transaction,
 } from '@/lib/api/transactions';
 import { QueryClient } from '@tanstack/react-query';
@@ -49,6 +52,42 @@ export function useCreateTransaction(): UseMutationResult<
     CreateTransactionResponse,
     unknown,
     CreateTransactionRequest,
+    unknown
+  >;
+}
+
+/**
+ * 取引更新の mutation
+ * @returns mutation 結果
+ */
+export function useUpdateTransaction(): UseMutationResult<
+  UpdateTransactionResponse,
+  unknown,
+  { id: number; request: UpdateTransactionRequest },
+  unknown
+> {
+  return useMutation({
+    mutationFn: async ({
+      id,
+      request,
+    }: {
+      id: number;
+      request: UpdateTransactionRequest;
+    }) => {
+      const response = await updateTransaction(id, request);
+      if (!response.data) {
+        throw new Error(response.error || '取引の更新に失敗しました');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      // 取引一覧をリフェッチ
+      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_QUERY_KEY });
+    },
+  }) as UseMutationResult<
+    UpdateTransactionResponse,
+    unknown,
+    { id: number; request: UpdateTransactionRequest },
     unknown
   >;
 }

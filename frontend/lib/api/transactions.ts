@@ -24,6 +24,15 @@ export interface CreateTransactionResponse {
   updatedAt: string;
 }
 
+export interface UpdateTransactionRequest {
+  date: string;
+  chartOfAccountsId: number;
+  amount: number;
+  description: string;
+}
+
+export type UpdateTransactionResponse = CreateTransactionResponse;
+
 /**
  * 取引を作成
  * @param request - 取引作成リクエスト
@@ -33,6 +42,21 @@ export async function createTransaction(
   request: CreateTransactionRequest,
 ): Promise<ApiResponse<CreateTransactionResponse>> {
   return apiClient.post<CreateTransactionResponse>('/api/transactions', {
+    ...request,
+  });
+}
+
+/**
+ * 取引を更新
+ * @param id - 取引ID
+ * @param request - 取引更新リクエスト
+ * @returns 更新された取引
+ */
+export async function updateTransaction(
+  id: number,
+  request: UpdateTransactionRequest,
+): Promise<ApiResponse<UpdateTransactionResponse>> {
+  return apiClient.put<UpdateTransactionResponse>(`/api/transactions/${id}`, {
     ...request,
   });
 }

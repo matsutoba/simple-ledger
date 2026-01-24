@@ -11,12 +11,14 @@ interface TransactionTypeButtonProps {
   type: TransactionType;
   selected: boolean;
   onClick: (transactionType: TransactionType) => void;
+  disabled?: boolean;
 }
 
 export const TransactionTypeButton: React.FC<TransactionTypeButtonProps> = ({
   type,
   selected,
   onClick,
+  disabled = false,
 }) => {
   const defaultClassName =
     'border-gray-300 text-gray-700 hover:border-gray-400';
@@ -35,6 +37,7 @@ export const TransactionTypeButton: React.FC<TransactionTypeButtonProps> = ({
       onClick={() => {
         onClick(type);
       }}
+      disabled={disabled}
       className={`px-4 py-3 rounded-lg border-2 transition-colors ${className}`}
     >
       {label}

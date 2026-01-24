@@ -9,7 +9,7 @@ import { Typography } from '@/components/ui/Typography';
 import { TransactionList } from './TransactionList';
 import { TransactionFilterBar } from './TransactionFilterBar';
 import { Icon } from '@/components/ui/Icon';
-import { AddTransactionModal } from '../common/AddTransactionModal/AddTransactionModal';
+import { AddTransactionModal } from '../common/TransactionModal/AddTransactionModal';
 import { useGetInfinityTransactions } from '@/hooks/useTransactions';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Spinner } from '@/components/ui/Spinner';
