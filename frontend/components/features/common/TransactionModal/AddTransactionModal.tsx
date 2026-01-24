@@ -1,9 +1,10 @@
 'use client';
 
-import { TransactionType } from '@/types/transaction';
 import { useCreateTransaction } from '@/hooks/useTransactions';
 import { showSuccessToast, showErrorToast } from '@/components/ui/Toast';
 import { TransactionModal } from './shared/TransactionModal';
+import { z } from 'zod';
+import { transactionSchema } from './shared/transaction_schema';
 
 interface AddTransactionModalProps {
   open: boolean;
@@ -18,20 +19,15 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 }) => {
   const { mutate, isPending } = useCreateTransaction();
 
-  const handleSubmit = (formData: {
-    type: TransactionType;
-    date: string;
-    category: string;
-    description: string;
-    amount: string;
-  }) => {
+  type TransactionFormData = z.infer<typeof transactionSchema>;
+
+  const handleSubmit = (formData: TransactionFormData) => {
     mutate(
       {
         date: formData.date,
-        chartOfAccountsId: parseInt(formData.category, 10),
-        amount: parseInt(formData.amount, 10),
         description: formData.description,
-      } as const satisfies Parameters<typeof mutate>[0],
+        journalEntries: formData.journalEntries,
+      },
       {
         onSuccess: () => {
           showSuccessToast('取引を保存しました');
