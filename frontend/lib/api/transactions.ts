@@ -40,6 +40,7 @@ export interface UpdateTransactionRequest {
   date: string;
   description: string;
   journalEntries: CreateJournalEntryRequest[];
+  correctionNote?: string;
 }
 
 /**

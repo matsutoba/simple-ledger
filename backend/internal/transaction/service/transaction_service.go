@@ -248,12 +248,61 @@ func (s *transactionService) Update(transactionID uint, userID uint, req *dto.Cr
 		return nil, errors.New("invalid date format, use YYYY-MM-DD")
 	}
 
+	// 修正フロー：CorrectionNoteがある場合は新しいトランザクションを作成
+	if req.CorrectionNote != "" {
+		// 新しい修正トランザクションを作成
+		newTransaction := &models.Transaction{
+			UserID:          userID,
+			Date:            date,
+			Description:     req.Description,
+			IsCorrection:    true,
+			CorrectedFromID: &transactionID,
+			CorrectionNote:  req.CorrectionNote,
+		}
+
+		if err := s.repo.Create(newTransaction); err != nil {
+			return nil, err
+		}
+
+		// 新しい仕訳エントリーを作成
+		var journalEntries []models.JournalEntry
+		for _, entryReq := range req.JournalEntries {
+			journalEntry := models.JournalEntry{
+				TransactionID:     newTransaction.ID,
+				ChartOfAccountsID: entryReq.ChartOfAccountsID,
+				Type:              entryReq.Type,
+				Amount:            entryReq.Amount,
+				Description:       entryReq.Description,
+			}
+			journalEntries = append(journalEntries, journalEntry)
+		}
+
+		if err := s.journalEntryRepo.CreateBatch(journalEntries); err != nil {
+			return nil, err
+		}
+
+		// 複式簿記の検証
+		isValid, err := s.journalEntryService.ValidateTransaction(newTransaction.ID)
+		if !isValid || err != nil {
+			s.journalEntryRepo.DeleteByTransactionID(newTransaction.ID)
+			s.repo.Delete(newTransaction.ID)
+			if err != nil {
+				return nil, err
+			}
+			return nil, errors.New("transaction failed validation: debit and credit totals must be equal")
+		}
+
+		result, err := s.repo.GetByID(newTransaction.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		return s.transactionToResponse(result), nil
+	}
+
+	// 通常更新フロー：修正ノートなし
 	transaction.Date = date
 	transaction.Description = req.Description
-
-	if err := s.repo.Update(transaction); err != nil {
-		return nil, err
-	}
 
 	// 既存の仕訳エントリーを削除
 	if err := s.journalEntryRepo.DeleteByTransactionID(transactionID); err != nil {
@@ -287,6 +336,10 @@ func (s *transactionService) Update(transactionID uint, userID uint, req *dto.Cr
 		return nil, errors.New("transaction failed validation: debit and credit totals must be equal")
 	}
 
+	if err := s.repo.Update(transaction); err != nil {
+		return nil, err
+	}
+
 	result, err := s.repo.GetByID(transaction.ID)
 	if err != nil {
 		return nil, err
@@ -315,12 +368,15 @@ func (s *transactionService) Delete(transactionID uint, userID uint) error {
 
 func (s *transactionService) transactionToResponse(transaction *models.Transaction) *dto.TransactionResponse {
 	response := &dto.TransactionResponse{
-		ID:          transaction.ID,
-		UserID:      transaction.UserID,
-		Date:        transaction.Date.Format("2006-01-02"),
-		Description: transaction.Description,
-		CreatedAt:   transaction.CreatedAt,
-		UpdatedAt:   transaction.UpdatedAt,
+		ID:              transaction.ID,
+		UserID:          transaction.UserID,
+		Date:            transaction.Date.Format("2006-01-02"),
+		Description:     transaction.Description,
+		CreatedAt:       transaction.CreatedAt,
+		UpdatedAt:       transaction.UpdatedAt,
+		IsCorrection:    transaction.IsCorrection,
+		CorrectedFromID: transaction.CorrectedFromID,
+		CorrectionNote:  transaction.CorrectionNote,
 	}
 
 	if len(transaction.JournalEntries) > 0 {

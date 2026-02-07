@@ -15,6 +15,9 @@ type CreateTransactionRequest struct {
 
 	// JournalEntries: 仕訳エントリー（最低2つ必要：借方1 + 貸方1）
 	JournalEntries []journalEntryDto.CreateJournalEntryRequest `json:"journalEntries" binding:"required,min=2"`
+
+	// CorrectionNote: 修正の理由・説明（修正の場合のみ）
+	CorrectionNote string `json:"correctionNote" binding:"max=255"`
 }
 
 // TransactionResponse: 取引レスポンス
@@ -33,6 +36,15 @@ type TransactionResponse struct {
 
 	// JournalEntries: 仕訳エントリー一覧
 	JournalEntries []journalEntryDto.JournalEntryResponse `json:"journalEntries,omitempty"`
+
+	// CorrectedFromID: 修正元の取引ID（修正の場合のみ）
+	CorrectedFromID *uint `json:"correctedFromId,omitempty"`
+
+	// IsCorrection: この取引が修正であるかどうか
+	IsCorrection bool `json:"isCorrection"`
+
+	// CorrectionNote: 修正の理由・説明
+	CorrectionNote string `json:"correctionNote"`
 
 	// CreatedAt: 作成日時
 	CreatedAt time.Time `json:"createdAt"`

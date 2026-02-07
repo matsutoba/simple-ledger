@@ -17,6 +17,9 @@ export interface Transaction {
   journalEntries?: JournalEntry[];
   createdAt: string;
   updatedAt: string;
+  isCorrection?: boolean;
+  correctedFromId?: number;
+  correctionNote?: string;
 }
 
 export type TransactionFilterCategory = TransactionType | 'all';
