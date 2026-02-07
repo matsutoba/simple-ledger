@@ -11,29 +11,14 @@ import { z } from 'zod';
 import { transactionSchema } from './transaction_schema';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Spinner } from '@/components/ui/Spinner';
-import { TransactionType } from '@/types/journalEntry';
-import {
-  DebitChartOfAccountsSelect,
-  CreditChartOfAccountsSelect,
-} from './ChartOfAccountsSelect';
+import { EntryType } from '@/types/journalEntry';
+import { FlexibleChartOfAccountsSelect } from './FlexibleChartOfAccountsSelect';
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
-interface JournalEntryPair {
-  debit: {
-    chartOfAccountsId: string;
-    amount: string;
-  };
-  credit: {
-    chartOfAccountsId: string;
-    amount: string;
-  };
-  description: string;
-}
-
 interface JournalEntryInput {
   chartOfAccountsId: string;
-  type: TransactionType;
+  type: EntryType;
   amount: string;
   description: string;
 }
@@ -60,40 +45,26 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const isEdit = mode === 'edit';
   const defaultDate =
     initialData?.date || new Date().toISOString().split('T')[0];
-  const defaultEntries: JournalEntryPair[] = initialData?.journalEntries
-    ? Array.from({
-        length: Math.max(
-          initialData.journalEntries.filter((e) => e.type === 'debit').length,
-          initialData.journalEntries.filter((e) => e.type === 'credit').length,
-        ),
-      }).map((_, i) => {
-        const debitEntry = initialData.journalEntries?.filter(
-          (e) => e.type === 'debit',
-        )[i];
-        const creditEntry = initialData.journalEntries?.filter(
-          (e) => e.type === 'credit',
-        )[i];
-        return {
-          debit: {
-            chartOfAccountsId: debitEntry
-              ? String(debitEntry.chartOfAccountsId)
-              : '',
-            amount: debitEntry ? String(debitEntry.amount) : '',
-          },
-          credit: {
-            chartOfAccountsId: creditEntry
-              ? String(creditEntry.chartOfAccountsId)
-              : '',
-            amount: creditEntry ? String(creditEntry.amount) : '',
-          },
-          description:
-            debitEntry?.description || creditEntry?.description || '',
-        };
-      })
+
+  // 初期データを新しい構造に変換
+  const defaultEntries: JournalEntryInput[] = initialData?.journalEntries
+    ? initialData.journalEntries.map((entry) => ({
+        chartOfAccountsId: String(entry.chartOfAccountsId),
+        type: entry.type,
+        amount: String(entry.amount),
+        description: entry.description,
+      }))
     : [
         {
-          debit: { chartOfAccountsId: '', amount: '' },
-          credit: { chartOfAccountsId: '', amount: '' },
+          chartOfAccountsId: '',
+          type: 'debit',
+          amount: '',
+          description: '',
+        },
+        {
+          chartOfAccountsId: '',
+          type: 'credit',
+          amount: '',
           description: '',
         },
       ];
@@ -102,7 +73,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [description, setDescription] = useState(
     initialData?.description || '',
   );
-  const [entries, setEntries] = useState<JournalEntryPair[]>(defaultEntries);
+  const [entries, setEntries] = useState<JournalEntryInput[]>(defaultEntries);
   const [errors, setErrors] = useState<
     Partial<Record<keyof TransactionFormData, string>>
   >({});
@@ -121,79 +92,65 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
   const handleEntryChange = (
     index: number,
-    field: 'debit' | 'credit',
-    subField: 'chartOfAccountsId' | 'amount',
+    field: keyof JournalEntryInput,
     value: string,
   ) => {
     const newEntries = [...entries];
-    newEntries[index] = {
-      ...newEntries[index],
-      [field]: {
-        ...newEntries[index][field],
-        [subField]: value,
-      },
-    };
+    newEntries[index] = { ...newEntries[index], [field]: value };
     setEntries(newEntries);
     if (errors.journalEntries) {
       setErrors({ ...errors, journalEntries: undefined });
     }
   };
 
-  const handleDescriptionChange = (index: number, value: string) => {
-    const newEntries = [...entries];
-    newEntries[index] = { ...newEntries[index], description: value };
-    setEntries(newEntries);
-  };
-
   const handleAddEntry = () => {
     setEntries([
       ...entries,
       {
-        debit: { chartOfAccountsId: '', amount: '' },
-        credit: { chartOfAccountsId: '', amount: '' },
+        chartOfAccountsId: '',
+        type: 'debit',
+        amount: '',
+        description: '',
+      },
+      {
+        chartOfAccountsId: '',
+        type: 'credit',
+        amount: '',
         description: '',
       },
     ]);
   };
 
   const handleRemoveEntry = (index: number) => {
-    if (entries.length > 1) {
+    if (entries.length > 2) {
       const newEntries = entries.filter((_, i) => i !== index);
       setEntries(newEntries);
     }
   };
 
   const calculateDebitTotal = () =>
-    entries.reduce((sum, e) => sum + (Number(e.debit.amount) || 0), 0);
+    entries
+      .filter((e) => e.type === 'debit')
+      .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
   const calculateCreditTotal = () =>
-    entries.reduce((sum, e) => sum + (Number(e.credit.amount) || 0), 0);
+    entries
+      .filter((e) => e.type === 'credit')
+      .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
   const isBalanced = calculateDebitTotal() === calculateCreditTotal();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const journalEntries = entries.flatMap((pair) => {
-      const result = [];
-      if (pair.debit.chartOfAccountsId && pair.debit.amount) {
-        result.push({
-          chartOfAccountsId: Number(pair.debit.chartOfAccountsId),
-          type: 'debit' as TransactionType,
-          amount: Number(pair.debit.amount),
-          description: pair.description,
-        });
-      }
-      if (pair.credit.chartOfAccountsId && pair.credit.amount) {
-        result.push({
-          chartOfAccountsId: Number(pair.credit.chartOfAccountsId),
-          type: 'credit' as TransactionType,
-          amount: Number(pair.credit.amount),
-          description: pair.description,
-        });
-      }
-      return result;
-    });
+    const journalEntries = entries
+      .filter((entry) => entry.chartOfAccountsId && entry.amount)
+      .map((entry) => ({
+        chartOfAccountsId: Number(entry.chartOfAccountsId),
+        type: entry.type as EntryType,
+        amount: Number(entry.amount),
+        description: entry.description,
+      }));
 
     const result = transactionSchema.safeParse({
       date,
@@ -322,129 +279,277 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {entries.map((entry, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-gray-200 hover:bg-gray-50"
-                    >
-                      {/* 借方勘定科目 */}
-                      <td className="px-2 py-2">
-                        <ErrorBoundary>
-                          <Suspense
-                            fallback={
-                              <div className="w-full h-8 bg-gray-200 rounded animate-pulse" />
-                            }
-                          >
-                            <DebitChartOfAccountsSelect
-                              value={entry.debit.chartOfAccountsId}
-                              onChange={(value) =>
-                                handleEntryChange(
-                                  index,
-                                  'debit',
-                                  'chartOfAccountsId',
-                                  value,
-                                )
-                              }
-                              side="debit"
+                  {/* 借方・貸方を1行で表示、複数仕訳対応 */}
+                  {(() => {
+                    const debitEntries = entries
+                      .map((e, i) =>
+                        e.type === 'debit' ? { ...e, index: i } : null,
+                      )
+                      .filter((e) => e !== null);
+                    const creditEntries = entries
+                      .map((e, i) =>
+                        e.type === 'credit' ? { ...e, index: i } : null,
+                      )
+                      .filter((e) => e !== null);
+                    const rowCount = Math.max(
+                      debitEntries.length || 1,
+                      creditEntries.length || 1,
+                    );
+
+                    return Array.from({ length: rowCount }).map((_, row) => {
+                      const debit = debitEntries[row];
+                      const credit = creditEntries[row];
+
+                      return (
+                        <tr
+                          key={`row-${row}`}
+                          className="border-b border-gray-200 hover:bg-gray-50"
+                        >
+                          {/* 借方勘定科目 */}
+                          <td className="px-2 py-2">
+                            <ErrorBoundary>
+                              <Suspense
+                                fallback={
+                                  <div className="w-full h-8 bg-gray-200 rounded animate-pulse" />
+                                }
+                              >
+                                {debit ? (
+                                  <FlexibleChartOfAccountsSelect
+                                    value={debit.chartOfAccountsId}
+                                    onChange={(value) =>
+                                      handleEntryChange(
+                                        debit.index,
+                                        'chartOfAccountsId',
+                                        value,
+                                      )
+                                    }
+                                    type="debit"
+                                  />
+                                ) : (
+                                  <select
+                                    value=""
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        // 借方エントリーを新規作成
+                                        const newEntries = [...entries];
+                                        const insertIndex = credit
+                                          ? entries.indexOf(credit) - 1
+                                          : entries.length;
+                                        newEntries.splice(
+                                          insertIndex >= 0 ? insertIndex : 0,
+                                          0,
+                                          {
+                                            chartOfAccountsId: e.target.value,
+                                            type: 'debit',
+                                            amount: '',
+                                            description: '',
+                                          },
+                                        );
+                                        setEntries(newEntries);
+                                      }
+                                    }}
+                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    <option value="">選択...</option>
+                                  </select>
+                                )}
+                              </Suspense>
+                            </ErrorBoundary>
+                          </td>
+
+                          {/* 借方金額 */}
+                          <td className="px-2 py-2">
+                            <input
+                              type="number"
+                              value={debit?.amount || ''}
+                              onChange={(e) => {
+                                if (debit) {
+                                  handleEntryChange(
+                                    debit.index,
+                                    'amount',
+                                    e.target.value,
+                                  );
+                                } else if (e.target.value) {
+                                  // 借方エントリーを新規作成
+                                  const newEntries = [...entries];
+                                  const insertIndex = credit
+                                    ? entries.indexOf(credit)
+                                    : 0;
+                                  newEntries.splice(insertIndex, 0, {
+                                    chartOfAccountsId: '',
+                                    type: 'debit',
+                                    amount: e.target.value,
+                                    description: '',
+                                  });
+                                  setEntries(newEntries);
+                                }
+                              }}
+                              placeholder="0"
+                              min="0"
+                              step="1"
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
-                          </Suspense>
-                        </ErrorBoundary>
-                      </td>
+                          </td>
 
-                      {/* 借方金額 */}
-                      <td className="px-2 py-2">
-                        <input
-                          type="number"
-                          value={entry.debit.amount}
-                          onChange={(e) =>
-                            handleEntryChange(
-                              index,
-                              'debit',
-                              'amount',
-                              e.target.value,
-                            )
-                          }
-                          placeholder="0"
-                          min="0"
-                          step="1"
-                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </td>
+                          {/* 貸方勘定科目 */}
+                          <td className="px-2 py-2">
+                            <ErrorBoundary>
+                              <Suspense
+                                fallback={
+                                  <div className="w-full h-8 bg-gray-200 rounded animate-pulse" />
+                                }
+                              >
+                                {credit ? (
+                                  <FlexibleChartOfAccountsSelect
+                                    value={credit.chartOfAccountsId}
+                                    onChange={(value) =>
+                                      handleEntryChange(
+                                        credit.index,
+                                        'chartOfAccountsId',
+                                        value,
+                                      )
+                                    }
+                                    type="credit"
+                                  />
+                                ) : (
+                                  <select
+                                    value=""
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        // 貸方エントリーを新規作成
+                                        const newEntries = [...entries];
+                                        const insertIndex =
+                                          debit !== undefined
+                                            ? entries.indexOf(debit) + 1
+                                            : entries.length;
+                                        newEntries.splice(insertIndex, 0, {
+                                          chartOfAccountsId: e.target.value,
+                                          type: 'credit',
+                                          amount: '',
+                                          description: '',
+                                        });
+                                        setEntries(newEntries);
+                                      }
+                                    }}
+                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    <option value="">選択...</option>
+                                  </select>
+                                )}
+                              </Suspense>
+                            </ErrorBoundary>
+                          </td>
 
-                      {/* 貸方勘定科目 */}
-                      <td className="px-2 py-2">
-                        <ErrorBoundary>
-                          <Suspense
-                            fallback={
-                              <div className="w-full h-8 bg-gray-200 rounded animate-pulse" />
-                            }
-                          >
-                            <CreditChartOfAccountsSelect
-                              value={entry.credit.chartOfAccountsId}
-                              onChange={(value) =>
-                                handleEntryChange(
-                                  index,
-                                  'credit',
-                                  'chartOfAccountsId',
-                                  value,
-                                )
-                              }
-                              side="credit"
+                          {/* 貸方金額 */}
+                          <td className="px-2 py-2">
+                            <input
+                              type="number"
+                              value={credit?.amount || ''}
+                              onChange={(e) => {
+                                if (credit) {
+                                  handleEntryChange(
+                                    credit.index,
+                                    'amount',
+                                    e.target.value,
+                                  );
+                                } else if (e.target.value) {
+                                  // 貸方エントリーを新規作成
+                                  const newEntries = [...entries];
+                                  const insertIndex =
+                                    debit !== undefined
+                                      ? entries.indexOf(debit) + 1
+                                      : entries.length;
+                                  newEntries.splice(insertIndex, 0, {
+                                    chartOfAccountsId: '',
+                                    type: 'credit',
+                                    amount: e.target.value,
+                                    description: '',
+                                  });
+                                  setEntries(newEntries);
+                                }
+                              }}
+                              placeholder="0"
+                              min="0"
+                              step="1"
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
-                          </Suspense>
-                        </ErrorBoundary>
-                      </td>
+                          </td>
 
-                      {/* 貸方金額 */}
-                      <td className="px-2 py-2">
-                        <input
-                          type="number"
-                          value={entry.credit.amount}
-                          onChange={(e) =>
-                            handleEntryChange(
-                              index,
-                              'credit',
-                              'amount',
-                              e.target.value,
-                            )
-                          }
-                          placeholder="0"
-                          min="0"
-                          step="1"
-                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </td>
+                          {/* 適用（説明）*/}
+                          <td className="px-2 py-2">
+                            <input
+                              type="text"
+                              value={
+                                debit?.description || credit?.description || ''
+                              }
+                              onChange={(e) => {
+                                if (debit) {
+                                  handleEntryChange(
+                                    debit.index,
+                                    'description',
+                                    e.target.value,
+                                  );
+                                } else if (credit) {
+                                  handleEntryChange(
+                                    credit.index,
+                                    'description',
+                                    e.target.value,
+                                  );
+                                }
+                              }}
+                              placeholder="説明（任意）"
+                              maxLength={100}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </td>
 
-                      {/* 適用（説明） */}
-                      <td className="px-2 py-2">
-                        <input
-                          type="text"
-                          value={entry.description}
-                          onChange={(e) =>
-                            handleDescriptionChange(index, e.target.value)
-                          }
-                          placeholder="説明（任意）"
-                          maxLength={100}
-                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </td>
+                          {/* 削除ボタン */}
+                          <td className="px-2 py-2 text-center">
+                            {entries.length > 2 && (debit || credit) && (
+                              <IconButton
+                                icon="trash"
+                                onClick={() => {
+                                  // 借方と貸方のペアを同時に削除
+                                  const debitIndex = debit?.index;
+                                  const creditIndex = credit?.index;
 
-                      {/* 削除ボタン */}
-                      <td className="px-2 py-2 text-center">
-                        {entries.length > 1 && (
-                          <IconButton
-                            icon="trash"
-                            onClick={() => handleRemoveEntry(index)}
-                            title="削除"
-                            size="sm"
-                            color="secondary"
-                            variant="ghost"
-                            type="button"
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                                  if (
+                                    debitIndex !== undefined &&
+                                    creditIndex !== undefined &&
+                                    creditIndex !== debitIndex
+                                  ) {
+                                    // 両方削除（インデックスが異なる場合）
+                                    const indicesToRemove = [
+                                      debitIndex,
+                                      creditIndex,
+                                    ].sort((a, b) => b - a);
+                                    let newEntries = [...entries];
+                                    indicesToRemove.forEach((index) => {
+                                      newEntries = newEntries.filter(
+                                        (_, i) => i !== index,
+                                      );
+                                    });
+                                    setEntries(newEntries);
+                                  } else if (debitIndex !== undefined) {
+                                    // 借方のみ削除
+                                    handleRemoveEntry(debitIndex);
+                                  } else if (creditIndex !== undefined) {
+                                    // 貸方のみ削除
+                                    handleRemoveEntry(creditIndex);
+                                  }
+                                }}
+                                title="削除"
+                                size="sm"
+                                color="secondary"
+                                variant="ghost"
+                                type="button"
+                              />
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
                 </tbody>
               </table>
 

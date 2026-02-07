@@ -43,7 +43,21 @@ func NewTransactionService(
 func (s *transactionService) Create(userID uint, req *dto.CreateTransactionRequest) (*dto.TransactionResponse, error) {
 	// バリデーション
 	if len(req.JournalEntries) < 2 {
-		return nil, errors.New("transaction must have at least 2 journal entries (debit and credit)")
+		return nil, errors.New("transaction must have at least 2 journal entries (one debit and one credit)")
+	}
+
+	// 借方と貸方の両方が存在するか確認
+	hasDebit := false
+	hasCredit := false
+	for _, entry := range req.JournalEntries {
+		if entry.Type == models.DebitEntry {
+			hasDebit = true
+		} else if entry.Type == models.CreditEntry {
+			hasCredit = true
+		}
+	}
+	if !hasDebit || !hasCredit {
+		return nil, errors.New("transaction must have both debit and credit entries")
 	}
 
 	date, err := time.Parse("2006-01-02", req.Date)
@@ -212,7 +226,21 @@ func (s *transactionService) Update(transactionID uint, userID uint, req *dto.Cr
 	}
 
 	if len(req.JournalEntries) < 2 {
-		return nil, errors.New("transaction must have at least 2 journal entries (debit and credit)")
+		return nil, errors.New("transaction must have at least 2 journal entries (one debit and one credit)")
+	}
+
+	// 借方と貸方の両方が存在するか確認
+	hasDebit := false
+	hasCredit := false
+	for _, entry := range req.JournalEntries {
+		if entry.Type == models.DebitEntry {
+			hasDebit = true
+		} else if entry.Type == models.CreditEntry {
+			hasCredit = true
+		}
+	}
+	if !hasDebit || !hasCredit {
+		return nil, errors.New("transaction must have both debit and credit entries")
 	}
 
 	date, err := time.Parse("2006-01-02", req.Date)

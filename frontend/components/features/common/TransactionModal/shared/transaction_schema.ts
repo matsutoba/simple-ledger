@@ -31,20 +31,30 @@ export const transactionSchema = z
       .default(''),
     journalEntries: z
       .array(journalEntrySchema)
-      .min(1, '取引には最低1つの仕訳エントリーが必要です'),
+      .min(2, '取引には最低1つの借方エントリーと1つの貸方エントリーが必要です'),
   })
   .refine(
     (data) => {
+      // 借方と貸方の両方が存在するか確認
+      const hasDebit = data.journalEntries.some((e) => e.type === 'debit');
+      const hasCredit = data.journalEntries.some((e) => e.type === 'credit');
+
+      if (!hasDebit || !hasCredit) {
+        return false;
+      }
+
+      // 借方合計 = 貸方合計を確認
       const debitTotal = data.journalEntries
         .filter((e) => e.type === 'debit')
         .reduce((sum, e) => sum + e.amount, 0);
       const creditTotal = data.journalEntries
         .filter((e) => e.type === 'credit')
         .reduce((sum, e) => sum + e.amount, 0);
+
       return debitTotal === creditTotal;
     },
     {
-      message: '借方合計と貸方合計が一致していません',
+      message: '複式簿記ルール: 借方合計と貸方合計が一致していません',
       path: ['journalEntries'],
     },
   );
