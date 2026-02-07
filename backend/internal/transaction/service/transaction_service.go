@@ -91,15 +91,21 @@ func (s *transactionService) Create(userID uint, req *dto.CreateTransactionReque
 
 	if err := s.journalEntryRepo.CreateBatch(journalEntries); err != nil {
 		// トランザクション作成がロールバックされるように、エラーを返す
-		s.repo.Delete(transaction.ID)
+		if delErr := s.repo.Delete(transaction.ID); delErr != nil {
+			return nil, errors.New("failed to rollback transaction: " + delErr.Error())
+		}
 		return nil, err
 	}
 
 	// 複式簿記の検証
 	isValid, err := s.journalEntryService.ValidateTransaction(transaction.ID)
 	if !isValid || err != nil {
-		s.repo.Delete(transaction.ID)
-		s.journalEntryRepo.DeleteByTransactionID(transaction.ID)
+		if delErr := s.journalEntryRepo.DeleteByTransactionID(transaction.ID); delErr != nil {
+			return nil, errors.New("failed to delete journal entries: " + delErr.Error())
+		}
+		if delErr := s.repo.Delete(transaction.ID); delErr != nil {
+			return nil, errors.New("failed to delete transaction: " + delErr.Error())
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -284,8 +290,12 @@ func (s *transactionService) Update(transactionID uint, userID uint, req *dto.Cr
 		// 複式簿記の検証
 		isValid, err := s.journalEntryService.ValidateTransaction(newTransaction.ID)
 		if !isValid || err != nil {
-			s.journalEntryRepo.DeleteByTransactionID(newTransaction.ID)
-			s.repo.Delete(newTransaction.ID)
+			if delErr := s.journalEntryRepo.DeleteByTransactionID(newTransaction.ID); delErr != nil {
+				return nil, errors.New("failed to delete journal entries: " + delErr.Error())
+			}
+			if delErr := s.repo.Delete(newTransaction.ID); delErr != nil {
+				return nil, errors.New("failed to delete transaction: " + delErr.Error())
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -329,7 +339,9 @@ func (s *transactionService) Update(transactionID uint, userID uint, req *dto.Cr
 	// 複式簿記の検証
 	isValid, err := s.journalEntryService.ValidateTransaction(transaction.ID)
 	if !isValid || err != nil {
-		s.journalEntryRepo.DeleteByTransactionID(transactionID)
+		if delErr := s.journalEntryRepo.DeleteByTransactionID(transactionID); delErr != nil {
+			return nil, errors.New("failed to delete journal entries: " + delErr.Error())
+		}
 		if err != nil {
 			return nil, err
 		}
