@@ -1,19 +1,35 @@
 'use client';
 
 import { Button } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { Modal } from '@/components/ui/Modal';
 import { useState, Suspense } from 'react';
 import { TextField } from '@/components/ui/TextField';
 import { Typography } from '@/components/ui/Typography';
-import { BlockStack, InlineStack } from '@/components/ui/Stack';
+import { BlockStack } from '@/components/ui/Stack';
 import { z } from 'zod';
 import { transactionSchema } from './transaction_schema';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Spinner } from '@/components/ui/Spinner';
 import { TransactionType } from '@/types/journalEntry';
-import { Card } from '@/components/ui/Card';
+import {
+  DebitChartOfAccountsSelect,
+  CreditChartOfAccountsSelect,
+} from './ChartOfAccountsSelect';
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
+
+interface JournalEntryPair {
+  debit: {
+    chartOfAccountsId: string;
+    amount: string;
+  };
+  credit: {
+    chartOfAccountsId: string;
+    amount: string;
+  };
+  description: string;
+}
 
 interface JournalEntryInput {
   chartOfAccountsId: string;
@@ -44,23 +60,49 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const isEdit = mode === 'edit';
   const defaultDate =
     initialData?.date || new Date().toISOString().split('T')[0];
-  const defaultEntries: JournalEntryInput[] = initialData?.journalEntries?.map(
-    (e) => ({
-      chartOfAccountsId: String(e.chartOfAccountsId),
-      type: e.type,
-      amount: String(e.amount),
-      description: e.description || '',
-    }),
-  ) || [
-    { chartOfAccountsId: '', type: 'debit', amount: '', description: '' },
-    { chartOfAccountsId: '', type: 'credit', amount: '', description: '' },
-  ];
+  const defaultEntries: JournalEntryPair[] = initialData?.journalEntries
+    ? Array.from({
+        length: Math.max(
+          initialData.journalEntries.filter((e) => e.type === 'debit').length,
+          initialData.journalEntries.filter((e) => e.type === 'credit').length,
+        ),
+      }).map((_, i) => {
+        const debitEntry = initialData.journalEntries?.filter(
+          (e) => e.type === 'debit',
+        )[i];
+        const creditEntry = initialData.journalEntries?.filter(
+          (e) => e.type === 'credit',
+        )[i];
+        return {
+          debit: {
+            chartOfAccountsId: debitEntry
+              ? String(debitEntry.chartOfAccountsId)
+              : '',
+            amount: debitEntry ? String(debitEntry.amount) : '',
+          },
+          credit: {
+            chartOfAccountsId: creditEntry
+              ? String(creditEntry.chartOfAccountsId)
+              : '',
+            amount: creditEntry ? String(creditEntry.amount) : '',
+          },
+          description:
+            debitEntry?.description || creditEntry?.description || '',
+        };
+      })
+    : [
+        {
+          debit: { chartOfAccountsId: '', amount: '' },
+          credit: { chartOfAccountsId: '', amount: '' },
+          description: '',
+        },
+      ];
 
   const [date, setDate] = useState(defaultDate);
   const [description, setDescription] = useState(
     initialData?.description || '',
   );
-  const [entries, setEntries] = useState<JournalEntryInput[]>(defaultEntries);
+  const [entries, setEntries] = useState<JournalEntryPair[]>(defaultEntries);
   const [errors, setErrors] = useState<
     Partial<Record<keyof TransactionFormData, string>>
   >({});
@@ -79,57 +121,79 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
 
   const handleEntryChange = (
     index: number,
-    field: keyof JournalEntryInput,
+    field: 'debit' | 'credit',
+    subField: 'chartOfAccountsId' | 'amount',
     value: string,
   ) => {
     const newEntries = [...entries];
-    newEntries[index] = { ...newEntries[index], [field]: value };
+    newEntries[index] = {
+      ...newEntries[index],
+      [field]: {
+        ...newEntries[index][field],
+        [subField]: value,
+      },
+    };
     setEntries(newEntries);
     if (errors.journalEntries) {
       setErrors({ ...errors, journalEntries: undefined });
     }
   };
 
+  const handleDescriptionChange = (index: number, value: string) => {
+    const newEntries = [...entries];
+    newEntries[index] = { ...newEntries[index], description: value };
+    setEntries(newEntries);
+  };
+
   const handleAddEntry = () => {
     setEntries([
       ...entries,
       {
-        chartOfAccountsId: '',
-        type: 'debit',
-        amount: '',
+        debit: { chartOfAccountsId: '', amount: '' },
+        credit: { chartOfAccountsId: '', amount: '' },
         description: '',
       },
     ]);
   };
 
   const handleRemoveEntry = (index: number) => {
-    if (entries.length > 2) {
+    if (entries.length > 1) {
       const newEntries = entries.filter((_, i) => i !== index);
       setEntries(newEntries);
     }
   };
 
   const calculateDebitTotal = () =>
-    entries
-      .filter((e) => e.type === 'debit')
-      .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    entries.reduce((sum, e) => sum + (Number(e.debit.amount) || 0), 0);
 
   const calculateCreditTotal = () =>
-    entries
-      .filter((e) => e.type === 'credit')
-      .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    entries.reduce((sum, e) => sum + (Number(e.credit.amount) || 0), 0);
 
   const isBalanced = calculateDebitTotal() === calculateCreditTotal();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const journalEntries = entries.map((e) => ({
-      chartOfAccountsId: Number(e.chartOfAccountsId),
-      type: e.type as TransactionType,
-      amount: Number(e.amount),
-      description: e.description,
-    }));
+    const journalEntries = entries.flatMap((pair) => {
+      const result = [];
+      if (pair.debit.chartOfAccountsId && pair.debit.amount) {
+        result.push({
+          chartOfAccountsId: Number(pair.debit.chartOfAccountsId),
+          type: 'debit' as TransactionType,
+          amount: Number(pair.debit.amount),
+          description: pair.description,
+        });
+      }
+      if (pair.credit.chartOfAccountsId && pair.credit.amount) {
+        result.push({
+          chartOfAccountsId: Number(pair.credit.chartOfAccountsId),
+          type: 'credit' as TransactionType,
+          amount: Number(pair.credit.amount),
+          description: pair.description,
+        });
+      }
+      return result;
+    });
 
     const result = transactionSchema.safeParse({
       date,
@@ -222,132 +286,180 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               </span>
             </div>
 
-            {!isBalanced && entries.length >= 2 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded px-3 py-2 mb-4 text-xs text-yellow-700">
-                ⚠️ 借方合計と貸方合計が一致していません
-              </div>
-            )}
-
-            {entries.map((entry, index) => (
-              <Card key={index} className="mb-3 p-3 bg-gray-50">
-                <BlockStack gap="sm">
-                  <InlineStack
-                    alignItems="center"
-                    gap="sm"
-                    justify="between"
-                    className="mb-2"
-                  >
-                    <Typography className="font-medium text-sm">
-                      エントリー {index + 1}
-                    </Typography>
-                    {entries.length > 2 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveEntry(index)}
-                        className="text-red-500 hover:text-red-700 text-xs"
-                      >
-                        削除
-                      </button>
-                    )}
-                  </InlineStack>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    {/* 借方/貸方選択 */}
-                    <div>
-                      <label className="block text-xs font-medium mb-1">
-                        種別
-                      </label>
-                      <select
-                        value={entry.type}
-                        onChange={(e) =>
-                          handleEntryChange(
-                            index,
-                            'type',
-                            e.target.value as TransactionType,
-                          )
-                        }
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="debit">借方</option>
-                        <option value="credit">貸方</option>
-                      </select>
-                    </div>
-
-                    {/* 金額 */}
-                    <div>
-                      <label className="block text-xs font-medium mb-1">
-                        金額
-                      </label>
-                      <input
-                        type="number"
-                        value={entry.amount}
-                        onChange={(e) =>
-                          handleEntryChange(index, 'amount', e.target.value)
-                        }
-                        placeholder="0"
-                        min="0"
-                        step="1"
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-
-                    {/* 勘定科目 */}
-                    <div>
-                      <label className="block text-xs font-medium mb-1">
-                        勘定科目
-                      </label>
-                      <ErrorBoundary>
-                        <Suspense
-                          fallback={
-                            <div className="w-full h-8 bg-gray-200 rounded animate-pulse" />
-                          }
-                        >
-                          <select
-                            value={entry.chartOfAccountsId}
-                            onChange={(e) =>
-                              handleEntryChange(
-                                index,
-                                'chartOfAccountsId',
-                                e.target.value,
-                              )
-                            }
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value="">選択...</option>
-                          </select>
-                        </Suspense>
-                      </ErrorBoundary>
-                    </div>
-                  </div>
-
-                  {/* エントリー説明 */}
-                  <input
-                    type="text"
-                    value={entry.description}
-                    onChange={(e) =>
-                      handleEntryChange(index, 'description', e.target.value)
-                    }
-                    placeholder="このエントリーの説明（任意）"
-                    maxLength={100}
-                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </BlockStack>
-              </Card>
-            ))}
-
             {errors.journalEntries && (
               <div className="text-red-600 text-xs mt-2">
                 {errors.journalEntries}
               </div>
             )}
 
-            <Button
-              onClick={handleAddEntry}
-              variant="outline"
-              className="w-full mt-3 text-sm"
-            >
-              + エントリーを追加
-            </Button>
+            {!isBalanced && entries.length >= 1 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded px-3 py-2 mb-4 text-xs text-yellow-700">
+                借方合計と貸方合計が一致していません
+              </div>
+            )}
+
+            {/* テーブル形式 */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-gray-300 bg-gray-50">
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">
+                      借方勘定科目
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 w-24">
+                      借方金額
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700">
+                      貸方勘定科目
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 w-24">
+                      貸方金額
+                    </th>
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 flex-1">
+                      適用
+                    </th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-gray-700 w-12"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {entries.map((entry, index) => (
+                    <tr
+                      key={index}
+                      className="border-b border-gray-200 hover:bg-gray-50"
+                    >
+                      {/* 借方勘定科目 */}
+                      <td className="px-2 py-2">
+                        <ErrorBoundary>
+                          <Suspense
+                            fallback={
+                              <div className="w-full h-8 bg-gray-200 rounded animate-pulse" />
+                            }
+                          >
+                            <DebitChartOfAccountsSelect
+                              value={entry.debit.chartOfAccountsId}
+                              onChange={(value) =>
+                                handleEntryChange(
+                                  index,
+                                  'debit',
+                                  'chartOfAccountsId',
+                                  value,
+                                )
+                              }
+                              side="debit"
+                            />
+                          </Suspense>
+                        </ErrorBoundary>
+                      </td>
+
+                      {/* 借方金額 */}
+                      <td className="px-2 py-2">
+                        <input
+                          type="number"
+                          value={entry.debit.amount}
+                          onChange={(e) =>
+                            handleEntryChange(
+                              index,
+                              'debit',
+                              'amount',
+                              e.target.value,
+                            )
+                          }
+                          placeholder="0"
+                          min="0"
+                          step="1"
+                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </td>
+
+                      {/* 貸方勘定科目 */}
+                      <td className="px-2 py-2">
+                        <ErrorBoundary>
+                          <Suspense
+                            fallback={
+                              <div className="w-full h-8 bg-gray-200 rounded animate-pulse" />
+                            }
+                          >
+                            <CreditChartOfAccountsSelect
+                              value={entry.credit.chartOfAccountsId}
+                              onChange={(value) =>
+                                handleEntryChange(
+                                  index,
+                                  'credit',
+                                  'chartOfAccountsId',
+                                  value,
+                                )
+                              }
+                              side="credit"
+                            />
+                          </Suspense>
+                        </ErrorBoundary>
+                      </td>
+
+                      {/* 貸方金額 */}
+                      <td className="px-2 py-2">
+                        <input
+                          type="number"
+                          value={entry.credit.amount}
+                          onChange={(e) =>
+                            handleEntryChange(
+                              index,
+                              'credit',
+                              'amount',
+                              e.target.value,
+                            )
+                          }
+                          placeholder="0"
+                          min="0"
+                          step="1"
+                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </td>
+
+                      {/* 適用（説明） */}
+                      <td className="px-2 py-2">
+                        <input
+                          type="text"
+                          value={entry.description}
+                          onChange={(e) =>
+                            handleDescriptionChange(index, e.target.value)
+                          }
+                          placeholder="説明（任意）"
+                          maxLength={100}
+                          className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </td>
+
+                      {/* 削除ボタン */}
+                      <td className="px-2 py-2 text-center">
+                        {entries.length > 1 && (
+                          <IconButton
+                            icon="trash"
+                            onClick={() => handleRemoveEntry(index)}
+                            title="削除"
+                            size="sm"
+                            color="secondary"
+                            variant="ghost"
+                            type="button"
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="flex justify-start">
+                <IconButton
+                  icon="circle-plus"
+                  onClick={handleAddEntry}
+                  title="エントリーを追加"
+                  size="sm"
+                  color="secondary"
+                  variant="ghost"
+                  type="button"
+                />
+              </div>
+            </div>
           </div>
         </BlockStack>
       </form>

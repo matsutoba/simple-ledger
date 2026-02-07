@@ -2,15 +2,13 @@ import { z } from 'zod';
 
 const journalEntrySchema = z.object({
   chartOfAccountsId: z
-    .string()
-    .min(1, '勘定科目を選択してください')
-    .transform((val) => parseInt(val, 10)),
+    .union([z.string().min(1, '勘定科目を選択してください'), z.number()])
+    .transform((val) => (typeof val === 'string' ? parseInt(val, 10) : val)),
   type: z.enum(['debit', 'credit'], {
     message: '借方または貸方を選択してください',
   }),
   amount: z
-    .string()
-    .min(1, '金額を入力してください')
+    .union([z.string().min(1, '金額を入力してください'), z.number()])
     .refine(
       (val) => !isNaN(Number(val)) && Number(val) > 0,
       '0より大きい数値を入力してください',
@@ -33,7 +31,7 @@ export const transactionSchema = z
       .default(''),
     journalEntries: z
       .array(journalEntrySchema)
-      .min(2, '取引には最低2つの仕訳エントリーが必要です'),
+      .min(1, '取引には最低1つの仕訳エントリーが必要です'),
   })
   .refine(
     (data) => {
