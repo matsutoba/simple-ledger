@@ -14,7 +14,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { isIncomeType } from '@/lib/utils/accountType';
 
 interface BalanceTrendChartProps {
   transactions: Transaction[];
@@ -39,10 +38,22 @@ export const BalanceTrendChart: React.FC<BalanceTrendChartProps> = ({
       if (!monthlyData[month]) {
         monthlyData[month] = { income: 0, expense: 0 };
       }
-      if (isIncomeType(t.chartOfAccountsType)) {
-        monthlyData[month].income += t.amount;
-      } else {
-        monthlyData[month].expense += t.amount;
+
+      // 複式簿記のjournalEntriesから収入・支出を計算
+      if (t.journalEntries) {
+        t.journalEntries.forEach((entry) => {
+          const accountType = entry.chartOfAccounts.type;
+
+          // 収益（revenue）は収入に含める
+          if (accountType === 'revenue') {
+            monthlyData[month].income += entry.amount;
+          }
+
+          // 費用（expense）は支出に含める
+          if (accountType === 'expense') {
+            monthlyData[month].expense += entry.amount;
+          }
+        });
       }
     });
 
