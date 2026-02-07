@@ -36,7 +36,6 @@ interface TransactionModalProps {
 export const TransactionModal: React.FC<TransactionModalProps> = ({
   open,
   onClose,
-  onSuccess,
   mode,
   onSubmit,
   isPending,

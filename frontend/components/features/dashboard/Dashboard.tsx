@@ -20,7 +20,10 @@ export const Dashboard: React.FC = () => {
     useState(false);
 
   const { data, isFetching, refetch } = useGetTransactions();
-  const transactions: Transaction[] = data?.transactions || [];
+  const transactions: Transaction[] = useMemo(
+    () => data?.transactions || [],
+    [data?.transactions],
+  );
 
   const { totalIncome, totalExpense, balance } = useMemo(
     () => calculateBalance(transactions),

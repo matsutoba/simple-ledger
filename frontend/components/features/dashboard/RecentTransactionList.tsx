@@ -9,8 +9,6 @@ interface RecentTransactionListProps {
   transactions: Transaction[];
 }
 
-const BODY_CELL_STYLE = 'border-b border-gray-200 px-4 py-2';
-
 export const RecentTransactionList: React.FC<RecentTransactionListProps> = ({
   transactions,
 }) => {

@@ -77,7 +77,7 @@ export const BalanceTrendChart: React.FC<BalanceTrendChartProps> = ({
             <XAxis dataKey="month" />
             <YAxis />
             <Tooltip
-              formatter={(value: ChartData) =>
+              formatter={(value: number | string) =>
                 `¥${Number(value).toLocaleString()}`
               }
             />

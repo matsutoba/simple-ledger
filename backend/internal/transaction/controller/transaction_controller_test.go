@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	jeDto "simple-ledger/internal/journal_entry/dto"
 	jerepository "simple-ledger/internal/journal_entry/repository"
 	jeservice "simple-ledger/internal/journal_entry/service"
 	"simple-ledger/internal/models"
@@ -152,4 +154,121 @@ func TestGetByUserIDWithPaginationMissingUserID(t *testing.T) {
 	ctrl.GetByUserIDWithPagination()(c)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+// TestCreateTransactionWithDoubleEntry: コントローラー - Create複式簿記対応
+func TestCreateTransactionWithDoubleEntry(t *testing.T) {
+	db := setupControllerTestDB()
+	txRepo := txrepository.NewTransactionRepository(db)
+	jeRepo := jerepository.NewJournalEntryRepository(db)
+	jeSvc := jeservice.NewJournalEntryService(jeRepo)
+	svc := txservice.NewTransactionService(txRepo, jeRepo, jeSvc)
+	ctrl := NewTransactionController(svc)
+
+	// 必要な勘定科目を作成
+	accountDebit := models.ChartOfAccounts{
+		Code: "1000", Name: "現金", Type: models.AssetAccount,
+		NormalBalance: models.DebitBalance, IsActive: true,
+	}
+	db.Create(&accountDebit)
+
+	accountCredit := models.ChartOfAccounts{
+		Code: "4000", Name: "売上", Type: models.RevenueAccount,
+		NormalBalance: models.CreditBalance, IsActive: true,
+	}
+	db.Create(&accountCredit)
+
+	req := dto.CreateTransactionRequest{
+		Date:        "2024-12-01",
+		Description: "商品販売",
+		JournalEntries: []jeDto.CreateJournalEntryRequest{
+			{ChartOfAccountsID: accountDebit.ID, Type: models.DebitEntry, Amount: 100000, Description: "販売"},
+			{ChartOfAccountsID: accountCredit.ID, Type: models.CreditEntry, Amount: 100000, Description: "販売"},
+		},
+	}
+
+	w := httptest.NewRecorder()
+	jsonReq, _ := json.Marshal(req)
+	httpReq, _ := http.NewRequest("POST", "/api/transactions", bytes.NewBuffer(jsonReq))
+	httpReq.Header.Set("Content-Type", "application/json")
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httpReq
+	c.Set("userID", uint(1))
+
+	ctrl.Create()(c)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	var response dto.TransactionResponse
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	assert.NoError(t, err)
+	assert.Equal(t, uint(1), response.UserID)
+	assert.Equal(t, "2024-12-01", response.Date)
+	assert.Len(t, response.JournalEntries, 2)
+}
+
+// TestCreateTransactionWithUnbalancedEntries: コントローラー - バランスなしエラー
+func TestCreateTransactionWithUnbalancedEntries(t *testing.T) {
+	db := setupControllerTestDB()
+	txRepo := txrepository.NewTransactionRepository(db)
+	jeRepo := jerepository.NewJournalEntryRepository(db)
+	jeSvc := jeservice.NewJournalEntryService(jeRepo)
+	svc := txservice.NewTransactionService(txRepo, jeRepo, jeSvc)
+	ctrl := NewTransactionController(svc)
+
+	accountDebit := models.ChartOfAccounts{
+		Code: "1000", Name: "現金", Type: models.AssetAccount,
+		NormalBalance: models.DebitBalance, IsActive: true,
+	}
+	db.Create(&accountDebit)
+
+	accountCredit := models.ChartOfAccounts{
+		Code: "4000", Name: "売上", Type: models.RevenueAccount,
+		NormalBalance: models.CreditBalance, IsActive: true,
+	}
+	db.Create(&accountCredit)
+
+	req := dto.CreateTransactionRequest{
+		Date:        "2024-12-01",
+		Description: "バランスなし",
+		JournalEntries: []jeDto.CreateJournalEntryRequest{
+			{ChartOfAccountsID: accountDebit.ID, Type: models.DebitEntry, Amount: 100000, Description: "販売"},
+			{ChartOfAccountsID: accountCredit.ID, Type: models.CreditEntry, Amount: 50000, Description: "販売"},
+		},
+	}
+
+	w := httptest.NewRecorder()
+	jsonReq, _ := json.Marshal(req)
+	httpReq, _ := http.NewRequest("POST", "/api/transactions", bytes.NewBuffer(jsonReq))
+	httpReq.Header.Set("Content-Type", "application/json")
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httpReq
+	c.Set("userID", uint(1))
+
+	ctrl.Create()(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "debit total must equal credit total")
+}
+
+// TestCreateTransactionInvalidJSON: コントローラー - 不正なJSON
+func TestCreateTransactionInvalidJSON(t *testing.T) {
+	db := setupControllerTestDB()
+	txRepo := txrepository.NewTransactionRepository(db)
+	jeRepo := jerepository.NewJournalEntryRepository(db)
+	jeSvc := jeservice.NewJournalEntryService(jeRepo)
+	svc := txservice.NewTransactionService(txRepo, jeRepo, jeSvc)
+	ctrl := NewTransactionController(svc)
+
+	w := httptest.NewRecorder()
+	httpReq, _ := http.NewRequest("POST", "/api/transactions", bytes.NewBuffer([]byte("invalid json")))
+	httpReq.Header.Set("Content-Type", "application/json")
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httpReq
+	c.Set("userID", uint(1))
+
+	ctrl.Create()(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "Invalid request body")
 }
