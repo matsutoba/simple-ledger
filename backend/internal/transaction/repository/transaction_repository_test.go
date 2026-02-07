@@ -22,6 +22,9 @@ func setupTransactionTestDB() *gorm.DB {
 	if err := db.AutoMigrate(&models.Transaction{}); err != nil {
 		panic(err)
 	}
+	if err := db.AutoMigrate(&models.JournalEntry{}); err != nil {
+		panic(err)
+	}
 
 	// テストデータの作成
 	user := models.User{
@@ -51,11 +54,9 @@ func TestCreate(t *testing.T) {
 	repo := NewTransactionRepository(db)
 
 	transaction := models.Transaction{
-		UserID:            1,
-		Date:              time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
-		ChartOfAccountsID: 1,
-		Amount:            50000,
-		Description:       "テスト取引",
+		UserID:      1,
+		Date:        time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
+		Description: "テスト取引",
 	}
 
 	err := repo.Create(&transaction)
@@ -68,11 +69,9 @@ func TestGetByID(t *testing.T) {
 	repo := NewTransactionRepository(db)
 
 	transaction := models.Transaction{
-		UserID:            1,
-		Date:              time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
-		ChartOfAccountsID: 1,
-		Amount:            50000,
-		Description:       "テスト取引",
+		UserID:      1,
+		Date:        time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
+		Description: "テスト取引",
 	}
 	db.Create(&transaction)
 
@@ -80,7 +79,7 @@ func TestGetByID(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, uint(1), result.UserID)
-	assert.Equal(t, 50000, result.Amount)
+	assert.Equal(t, "テスト取引", result.Description)
 }
 
 func TestGetByUserID(t *testing.T) {
@@ -89,18 +88,14 @@ func TestGetByUserID(t *testing.T) {
 
 	transactions := []models.Transaction{
 		{
-			UserID:            1,
-			Date:              time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
-			ChartOfAccountsID: 1,
-			Amount:            50000,
-			Description:       "取引1",
+			UserID:      1,
+			Date:        time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
+			Description: "取引1",
 		},
 		{
-			UserID:            1,
-			Date:              time.Date(2024, 12, 2, 0, 0, 0, 0, time.UTC),
-			ChartOfAccountsID: 1,
-			Amount:            30000,
-			Description:       "取引2",
+			UserID:      1,
+			Date:        time.Date(2024, 12, 2, 0, 0, 0, 0, time.UTC),
+			Description: "取引2",
 		},
 	}
 
@@ -119,18 +114,14 @@ func TestGetByUserIDAndDateRange(t *testing.T) {
 
 	transactions := []models.Transaction{
 		{
-			UserID:            1,
-			Date:              time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
-			ChartOfAccountsID: 1,
-			Amount:            50000,
-			Description:       "取引1",
+			UserID:      1,
+			Date:        time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
+			Description: "取引1",
 		},
 		{
-			UserID:            1,
-			Date:              time.Date(2024, 12, 15, 0, 0, 0, 0, time.UTC),
-			ChartOfAccountsID: 1,
-			Amount:            30000,
-			Description:       "取引2",
+			UserID:      1,
+			Date:        time.Date(2024, 12, 15, 0, 0, 0, 0, time.UTC),
+			Description: "取引2",
 		},
 	}
 
@@ -144,7 +135,7 @@ func TestGetByUserIDAndDateRange(t *testing.T) {
 	results, err := repo.GetByUserIDAndDateRange(1, startDate, endDate)
 	assert.NoError(t, err)
 	assert.Len(t, results, 1)
-	assert.Equal(t, 30000, results[0].Amount)
+	assert.Equal(t, "取引2", results[0].Description)
 }
 
 func TestDeleteByUserIDAndID(t *testing.T) {
@@ -152,11 +143,9 @@ func TestDeleteByUserIDAndID(t *testing.T) {
 	repo := NewTransactionRepository(db)
 
 	transaction := models.Transaction{
-		UserID:            1,
-		Date:              time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
-		ChartOfAccountsID: 1,
-		Amount:            50000,
-		Description:       "テスト取引",
+		UserID:      1,
+		Date:        time.Date(2024, 12, 1, 0, 0, 0, 0, time.UTC),
+		Description: "テスト取引",
 	}
 	db.Create(&transaction)
 
@@ -175,11 +164,9 @@ func TestGetByUserIDWithPagination(t *testing.T) {
 	// テストデータの作成（30件）
 	for i := 1; i <= 30; i++ {
 		transaction := models.Transaction{
-			UserID:            1,
-			Date:              time.Date(2024, 12, i%28+1, 0, 0, 0, 0, time.UTC),
-			ChartOfAccountsID: 1,
-			Amount:            10000 * i,
-			Description:       "テスト取引" + string(rune(i)),
+			UserID:      1,
+			Date:        time.Date(2024, 12, i%28+1, 0, 0, 0, 0, time.UTC),
+			Description: "テスト取引",
 		}
 		db.Create(&transaction)
 	}

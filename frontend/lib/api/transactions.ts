@@ -5,33 +5,43 @@
 
 import { apiClient, ApiResponse } from './client';
 import { Transaction } from '@/types/transaction';
+import { JournalEntry, EntryType } from '@/types/journalEntry';
 
+/**
+ * 仕訳エントリーリクエスト型
+ */
+export interface CreateJournalEntryRequest {
+  chartOfAccountsId: number;
+  type: EntryType;
+  amount: number;
+  description: string;
+}
+
+/**
+ * 取引作成リクエスト型
+ */
 export interface CreateTransactionRequest {
   date: string;
-  chartOfAccountsId: number;
-  amount: number;
   description: string;
+  journalEntries: CreateJournalEntryRequest[];
 }
 
-export interface CreateTransactionResponse {
-  id: number;
-  userId: number;
-  date: string;
-  chartOfAccountsId: number;
-  amount: number;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
+/**
+ * 取引レスポンス型
+ */
+export interface TransactionResponse extends Transaction {
+  journalEntries?: JournalEntry[];
 }
 
+/**
+ * 取引更新リクエスト型
+ */
 export interface UpdateTransactionRequest {
   date: string;
-  chartOfAccountsId: number;
-  amount: number;
   description: string;
+  journalEntries: CreateJournalEntryRequest[];
+  correctionNote?: string;
 }
-
-export type UpdateTransactionResponse = CreateTransactionResponse;
 
 /**
  * 取引を作成
@@ -40,8 +50,8 @@ export type UpdateTransactionResponse = CreateTransactionResponse;
  */
 export async function createTransaction(
   request: CreateTransactionRequest,
-): Promise<ApiResponse<CreateTransactionResponse>> {
-  return apiClient.post<CreateTransactionResponse>('/api/transactions', {
+): Promise<ApiResponse<TransactionResponse>> {
+  return apiClient.post<TransactionResponse>('/api/transactions', {
     ...request,
   });
 }
@@ -55,10 +65,21 @@ export async function createTransaction(
 export async function updateTransaction(
   id: number,
   request: UpdateTransactionRequest,
-): Promise<ApiResponse<UpdateTransactionResponse>> {
-  return apiClient.put<UpdateTransactionResponse>(`/api/transactions/${id}`, {
+): Promise<ApiResponse<TransactionResponse>> {
+  return apiClient.put<TransactionResponse>(`/api/transactions/${id}`, {
     ...request,
   });
+}
+
+/**
+ * 取引を取得（単独）
+ * @param id - 取引ID
+ * @returns 取引情報
+ */
+export async function getTransaction(
+  id: number,
+): Promise<ApiResponse<TransactionResponse>> {
+  return apiClient.get<TransactionResponse>(`/api/transactions/${id}`);
 }
 
 /**
@@ -66,9 +87,11 @@ export async function updateTransaction(
  * @returns ユーザーの取引一覧
  */
 export async function getTransactions(): Promise<
-  ApiResponse<{ transactions: Transaction[] }>
+  ApiResponse<{ transactions: TransactionResponse[] }>
 > {
-  return apiClient.get<{ transactions: Transaction[] }>('/api/transactions');
+  return apiClient.get<{ transactions: TransactionResponse[] }>(
+    '/api/transactions',
+  );
 }
 
 /**
@@ -84,7 +107,7 @@ export async function getTransactionsWithPagination(
   keyword?: string,
 ): Promise<
   ApiResponse<{
-    transactions: Transaction[];
+    transactions: TransactionResponse[];
     total: number;
     page: number;
     pageSize: number;
@@ -97,7 +120,7 @@ export async function getTransactionsWithPagination(
   }
 
   return apiClient.get<{
-    transactions: Transaction[];
+    transactions: TransactionResponse[];
     total: number;
     page: number;
     pageSize: number;
@@ -118,4 +141,72 @@ export async function deleteTransaction(
   return apiClient.delete<{ message: string }>(`/api/transactions/${id}`);
 }
 
-export type { Transaction };
+/**
+ * 仕訳エントリーを取得
+ * @param transactionId - 取引ID
+ * @returns 仕訳エントリー一覧
+ */
+export async function getJournalEntries(
+  transactionId: number,
+): Promise<ApiResponse<JournalEntry[]>> {
+  return apiClient.get<JournalEntry[]>(
+    `/api/journal-entries/transactions/${transactionId}`,
+  );
+}
+
+/**
+ * 仕訳エントリーを作成
+ * @param transactionId - 取引ID
+ * @param request - 仕訳エントリー作成リクエスト
+ * @returns 作成された仕訳エントリー
+ */
+export async function createJournalEntry(
+  transactionId: number,
+  request: CreateJournalEntryRequest,
+): Promise<ApiResponse<JournalEntry>> {
+  return apiClient.post<JournalEntry>(
+    `/api/journal-entries/transactions/${transactionId}`,
+    {
+      ...request,
+    },
+  );
+}
+
+/**
+ * 仕訳エントリーを更新
+ * @param id - 仕訳エントリーID
+ * @param request - 仕訳エントリー更新リクエスト
+ * @returns 更新された仕訳エントリー
+ */
+export async function updateJournalEntry(
+  id: number,
+  request: CreateJournalEntryRequest,
+): Promise<ApiResponse<JournalEntry>> {
+  return apiClient.put<JournalEntry>(`/api/journal-entries/${id}`, {
+    ...request,
+  });
+}
+
+/**
+ * 仕訳エントリーを削除
+ * @param id - 仕訳エントリーID
+ * @returns 削除結果
+ */
+export async function deleteJournalEntry(
+  id: number,
+): Promise<ApiResponse<{ message: string }>> {
+  return apiClient.delete<{ message: string }>(`/api/journal-entries/${id}`);
+}
+
+/**
+ * 取引のバランスを確認
+ * @param transactionId - 取引ID
+ * @returns バランス検証結果
+ */
+export async function validateTransaction(
+  transactionId: number,
+): Promise<ApiResponse<{ transactionId: number; isValid: boolean }>> {
+  return apiClient.get<{ transactionId: number; isValid: boolean }>(
+    `/api/journal-entries/transactions/${transactionId}/validate`,
+  );
+}

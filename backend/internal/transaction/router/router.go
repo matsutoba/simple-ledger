@@ -2,6 +2,8 @@ package router
 
 import (
 	"simple-ledger/internal/auth/middleware"
+	journalEntryRepository "simple-ledger/internal/journal_entry/repository"
+	journalEntryService "simple-ledger/internal/journal_entry/service"
 	"simple-ledger/internal/transaction/controller"
 	"simple-ledger/internal/transaction/repository"
 	"simple-ledger/internal/transaction/service"
@@ -12,7 +14,9 @@ import (
 
 func SetupTransactionRoutes(apiGroup *gin.RouterGroup, db *gorm.DB) {
 	repo := repository.NewTransactionRepository(db)
-	svc := service.NewTransactionService(repo)
+	journalEntryRepo := journalEntryRepository.NewJournalEntryRepository(db)
+	journalEntrySvc := journalEntryService.NewJournalEntryService(journalEntryRepo)
+	svc := service.NewTransactionService(repo, journalEntryRepo, journalEntrySvc)
 	ctrl := controller.NewTransactionController(svc)
 
 	transactionRoutes := apiGroup.Group("/transactions")

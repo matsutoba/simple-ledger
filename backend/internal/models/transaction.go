@@ -13,20 +13,26 @@ type Transaction struct {
 	// User: リレーション（ユーザー）
 	User *User `gorm:"foreignKey:UserID" json:"user,omitempty"`
 
-	// Date: 取引日
+	// Date: 取引日（会計上の仕訳日）
 	Date time.Time `gorm:"type:date;not null;index:idx_user_date_created,sort:desc" json:"date"`
-
-	// ChartOfAccountsID: 勘定科目ID（外部キー）
-	ChartOfAccountsID uint `gorm:"not null;index" json:"chartOfAccountsId"`
-
-	// ChartOfAccounts: リレーション（勘定科目）- ポインタ型にするとテーブルに列を作成しない、ChartOfAccountsIDで関連データを参照
-	ChartOfAccounts *ChartOfAccounts `gorm:"foreignKey:ChartOfAccountsID" json:"chartOfAccounts,omitempty"`
-
-	// Amount: 金額
-	Amount int `gorm:"not null" json:"amount"`
 
 	// Description: 取引の説明・摘要
 	Description string `gorm:"type:text" json:"description"`
+
+	// JournalEntries: リレーション（仕訳エントリー）- 1つの取引は複数の仕訳エントリーを持つ
+	JournalEntries []JournalEntry `gorm:"foreignKey:TransactionID" json:"journalEntries,omitempty"`
+
+	// CorrectedFromID: 修正元の取引ID（修正の場合のみ）
+	CorrectedFromID *uint `gorm:"index" json:"correctedFromId,omitempty"`
+
+	// CorrectedTransaction: リレーション（修正元の取引）
+	CorrectedTransaction *Transaction `gorm:"foreignKey:CorrectedFromID" json:"correctedTransaction,omitempty"`
+
+	// IsCorrection: この取引が修正であるかどうか
+	IsCorrection bool `gorm:"default:false" json:"isCorrection"`
+
+	// CorrectionNote: 修正の理由・説明
+	CorrectionNote string `gorm:"type:text" json:"correctionNote"`
 
 	// CreatedAt: 取引の作成日時
 	CreatedAt time.Time `gorm:"index:idx_user_date_created,sort:desc" json:"createdAt"`

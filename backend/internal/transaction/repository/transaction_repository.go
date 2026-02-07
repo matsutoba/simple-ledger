@@ -26,7 +26,8 @@ func (r *TransactionRepository) Create(transaction *models.Transaction) error {
 func (r *TransactionRepository) GetByID(id uint) (*models.Transaction, error) {
 	var transaction models.Transaction
 	if err := r.db.
-		Preload("ChartOfAccounts").
+		Preload("JournalEntries").
+		Preload("JournalEntries.ChartOfAccounts").
 		Preload("User").
 		Where("id = ?", id).
 		First(&transaction).Error; err != nil {
@@ -39,7 +40,8 @@ func (r *TransactionRepository) GetByID(id uint) (*models.Transaction, error) {
 func (r *TransactionRepository) GetByUserID(userID uint) ([]models.Transaction, error) {
 	var transactions []models.Transaction
 	if err := r.db.
-		Preload("ChartOfAccounts").
+		Preload("JournalEntries").
+		Preload("JournalEntries.ChartOfAccounts").
 		Where("user_id = ?", userID).
 		Order("date DESC, created_at DESC").
 		Find(&transactions).Error; err != nil {
@@ -56,7 +58,8 @@ func (r *TransactionRepository) GetByUserIDAndDateRange(
 ) ([]models.Transaction, error) {
 	var transactions []models.Transaction
 	if err := r.db.
-		Preload("ChartOfAccounts").
+		Preload("JournalEntries").
+		Preload("JournalEntries.ChartOfAccounts").
 		Where("user_id = ? AND date BETWEEN ? AND ?", userID, startDate, endDate).
 		Order("date DESC, created_at DESC").
 		Find(&transactions).Error; err != nil {
@@ -81,7 +84,8 @@ func (r *TransactionRepository) GetByUserIDWithPagination(userID uint, page, pag
 	// ページネーション付きでデータを取得
 	offset := (page - 1) * pageSize
 	if err := r.db.
-		Preload("ChartOfAccounts").
+		Preload("JournalEntries").
+		Preload("JournalEntries.ChartOfAccounts").
 		Where("user_id = ?", userID).
 		Order("date DESC, created_at DESC").
 		Offset(offset).
@@ -100,9 +104,9 @@ func (r *TransactionRepository) GetByUserIDWithPaginationAndKeyword(userID uint,
 
 	query := r.db.Where("user_id = ?", userID)
 
-	// キーワード検索（amountとdescriptionで部分一致）
+	// キーワード検索（descriptionで部分一致）
 	if keyword != "" {
-		query = query.Where("description LIKE ? OR CAST(amount AS CHAR) LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+		query = query.Where("description LIKE ?", "%"+keyword+"%")
 	}
 
 	// 全件数を取得
@@ -115,7 +119,8 @@ func (r *TransactionRepository) GetByUserIDWithPaginationAndKeyword(userID uint,
 	// ページネーション付きでデータを取得
 	offset := (page - 1) * pageSize
 	if err := query.
-		Preload("ChartOfAccounts").
+		Preload("JournalEntries").
+		Preload("JournalEntries.ChartOfAccounts").
 		Order("date DESC, created_at DESC").
 		Offset(offset).
 		Limit(pageSize).
@@ -127,15 +132,19 @@ func (r *TransactionRepository) GetByUserIDWithPaginationAndKeyword(userID uint,
 }
 
 // GetByUserIDAndChartOfAccountsID: ユーザーIDと勘定科目IDで取引一覧を取得
+// Note: 複式簿記対応後、取引は複数の勘定科目を含むため、この関数は廃止予定
 func (r *TransactionRepository) GetByUserIDAndChartOfAccountsID(
 	userID uint,
 	chartOfAccountsID uint,
 ) ([]models.Transaction, error) {
 	var transactions []models.Transaction
 	if err := r.db.
-		Preload("ChartOfAccounts").
-		Where("user_id = ? AND chart_of_accounts_id = ?", userID, chartOfAccountsID).
-		Order("date DESC, created_at DESC").
+		Joins("JOIN journal_entries ON journal_entries.transaction_id = transactions.id").
+		Preload("JournalEntries").
+		Preload("JournalEntries.ChartOfAccounts").
+		Where("transactions.user_id = ? AND journal_entries.chart_of_accounts_id = ?", userID, chartOfAccountsID).
+		Distinct("transactions.id").
+		Order("transactions.date DESC, transactions.created_at DESC").
 		Find(&transactions).Error; err != nil {
 		return nil, err
 	}

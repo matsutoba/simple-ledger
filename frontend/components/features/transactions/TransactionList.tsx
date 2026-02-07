@@ -2,10 +2,8 @@ import { Card } from '@/components/ui/Card';
 import { cn } from '@/components/shadcn/ui/utils';
 import { BlockStack, InlineStack } from '@/components/ui/Stack';
 import { Typography } from '@/components/ui/Typography';
-import { ChartOfAccountsType, Transaction } from '@/types/transaction';
-import { TRANSACTION_TYPE_COLORS } from '@/constants';
+import { Transaction } from '@/types/transaction';
 import { IconButton } from '@/components/ui/IconButton';
-import { isExpenseType } from '@/lib/utils/accountType';
 import { CorrectionBadge } from './CorrectionBadge';
 
 interface TransactionListProps {
@@ -21,11 +19,16 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   transactions,
   onEditClick,
 }) => {
-  const getTransactionColor = (type: ChartOfAccountsType) =>
-    TRANSACTION_TYPE_COLORS[isExpenseType(type) ? 'expense' : 'income'];
-
   const isCorrectionTransaction = (description: string): boolean => {
     return description.includes('【訂正】');
+  };
+
+  const getDebitEntry = (tx: Transaction) => {
+    return tx.journalEntries?.find((entry) => entry.type === 'debit');
+  };
+
+  const getCreditEntry = (tx: Transaction) => {
+    return tx.journalEntries?.find((entry) => entry.type === 'credit');
   };
 
   return (
@@ -35,12 +38,10 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           <table className="w-full table-auto border-collapse">
             <thead>
               <tr>
-                <th className={HEADER_CELL_STYLE}>日付</th>
-                <th className={HEADER_CELL_STYLE}>勘定科目</th>
+                <th className={HEADER_CELL_STYLE}>取引日</th>
+                <th className={HEADER_CELL_STYLE}>借方</th>
+                <th className={HEADER_CELL_STYLE}>貸方</th>
                 <th className={HEADER_CELL_STYLE}>説明</th>
-                <th className={HEADER_CELL_STYLE} align="right">
-                  金額
-                </th>
                 <th className={HEADER_CELL_STYLE}>操作</th>
               </tr>
             </thead>
@@ -54,57 +55,90 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                   </td>
                 </tr>
               ) : (
-                transactions.map((tx) => (
-                  <tr
-                    key={tx.id}
-                    className={cn(
-                      'hover:bg-gray-50',
-                      isCorrectionTransaction(tx.description) &&
-                        'bg-yellow-50 border-l-4 border-yellow-400',
-                    )}
-                  >
-                    <td className={BODY_CELL_STYLE}>
-                      <Typography className="text-sm text-gray-500">
-                        {new Date(tx.date).toLocaleDateString()}
-                      </Typography>
-                    </td>
-                    <td className={BODY_CELL_STYLE}>
-                      <Typography className="text-sm font-medium">
-                        {tx.chartOfAccountsName}
-                      </Typography>
-                    </td>
+                transactions.map((tx) => {
+                  const debitEntry = getDebitEntry(tx);
+                  const creditEntry = getCreditEntry(tx);
 
-                    <td className={BODY_CELL_STYLE}>
-                      <InlineStack alignItems="center" gap="sm">
-                        <CorrectionBadge
-                          showBadge={isCorrectionTransaction(tx.description)}
+                  return (
+                    <tr
+                      key={tx.id}
+                      className={cn(
+                        'hover:bg-gray-50',
+                        isCorrectionTransaction(tx.description) &&
+                          'bg-yellow-50',
+                      )}
+                    >
+                      <td className={BODY_CELL_STYLE}>
+                        <Typography className="text-sm text-gray-500">
+                          {new Date(tx.date).toLocaleDateString()}
+                        </Typography>
+                      </td>
+
+                      <td className={BODY_CELL_STYLE}>
+                        {debitEntry ? (
+                          <BlockStack gap="xs">
+                            <Typography className="text-sm font-medium">
+                              {debitEntry.chartOfAccounts?.name}
+                            </Typography>
+                            <Typography
+                              className="text-sm text-blue-600 font-medium"
+                              align="right"
+                            >
+                              ¥{debitEntry.amount.toLocaleString()}
+                            </Typography>
+                          </BlockStack>
+                        ) : (
+                          <Typography className="text-sm text-gray-400">
+                            -
+                          </Typography>
+                        )}
+                      </td>
+
+                      <td className={BODY_CELL_STYLE}>
+                        {creditEntry ? (
+                          <BlockStack gap="xs">
+                            <Typography className="text-sm font-medium">
+                              {creditEntry.chartOfAccounts?.name}
+                            </Typography>
+                            <Typography
+                              className="text-sm text-red-600 font-medium"
+                              align="right"
+                            >
+                              ¥{creditEntry.amount.toLocaleString()}
+                            </Typography>
+                          </BlockStack>
+                        ) : (
+                          <Typography className="text-sm text-gray-400">
+                            -
+                          </Typography>
+                        )}
+                      </td>
+
+                      <td className={BODY_CELL_STYLE}>
+                        <InlineStack alignItems="center" gap="sm">
+                          <CorrectionBadge
+                            showBadge={isCorrectionTransaction(tx.description)}
+                          />
+                          <Typography className="text-sm">
+                            {tx.description}
+                          </Typography>
+                        </InlineStack>
+                      </td>
+
+                      <td className={BODY_CELL_STYLE}>
+                        <IconButton
+                          icon="edit"
+                          size="md"
+                          color="warning"
+                          variant="ghost"
+                          ariaLabel="Edit transaction"
+                          className="cursor-pointer"
+                          onClick={() => onEditClick(tx)}
                         />
-                        <Typography>{tx.description}</Typography>
-                      </InlineStack>
-                    </td>
-
-                    <td className={BODY_CELL_STYLE}>
-                      <Typography
-                        className={getTransactionColor(tx.chartOfAccountsType)}
-                        align="right"
-                      >
-                        {isExpenseType(tx.chartOfAccountsType) ? '-' : '+'}
-                        {tx.amount.toLocaleString()} 円
-                      </Typography>
-                    </td>
-                    <td className={BODY_CELL_STYLE}>
-                      <IconButton
-                        icon="edit"
-                        size="md"
-                        color="warning"
-                        variant="ghost"
-                        ariaLabel="Edit transaction"
-                        className="cursor-pointer"
-                        onClick={() => onEditClick(tx)}
-                      />
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

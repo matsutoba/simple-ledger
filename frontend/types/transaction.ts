@@ -1,4 +1,4 @@
-import { AccountType } from './chartOfAccount';
+import { JournalEntry } from './journalEntry';
 
 export type TransactionType = 'income' | 'expense';
 export type TrendType = TransactionType | 'balance';
@@ -13,20 +13,19 @@ export interface Transaction {
   id: number;
   userId: number;
   date: string;
-  chartOfAccountsId: number;
-  chartOfAccountsCode: string;
-  chartOfAccountsName: string;
-  chartOfAccountsType: ChartOfAccountsType;
-  amount: number;
   description: string;
+  journalEntries?: JournalEntry[];
   createdAt: string;
   updatedAt: string;
+  isCorrection?: boolean;
+  correctedFromId?: number;
+  correctionNote?: string;
 }
 
 export type TransactionFilterCategory = TransactionType | 'all';
 
 export interface TransactionCategoryDataItem {
-  type: AccountType;
+  type: ChartOfAccountsType;
   value: number;
 }
 

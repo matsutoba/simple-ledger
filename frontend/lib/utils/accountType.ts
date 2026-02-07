@@ -20,20 +20,33 @@ export const isExpenseType = (type: AccountType): boolean => {
 };
 
 /**
- * 取引一覧から収支を計算
+ * 取引一覧から収支を計算（複式簿記データに基づく）
  * @param transactions 取引一覧
  * @returns 総収入、総支出、残高
  */
 export const calculateBalance = (transactions: Transaction[]) => {
-  const totalIncome = transactions
-    .filter((tx) => isIncomeType(tx.chartOfAccountsType))
-    .reduce((sum, tx) => sum + tx.amount, 0);
+  let totalIncome = 0;
+  let totalExpense = 0;
 
-  const totalExpense = transactions
-    .filter((tx) => isExpenseType(tx.chartOfAccountsType))
-    .reduce((sum, tx) => sum + tx.amount, 0);
+  transactions.forEach((tx) => {
+    if (!tx.journalEntries) return;
 
-  const balance = Math.abs(totalIncome - totalExpense);
+    tx.journalEntries.forEach((entry) => {
+      const accountType = entry.chartOfAccounts.type;
+
+      // 収益は貸方（credit）で記録される
+      if (accountType === 'revenue' && entry.type === 'credit') {
+        totalIncome += entry.amount;
+      }
+
+      // 費用は借方（debit）で記録される
+      if (accountType === 'expense' && entry.type === 'debit') {
+        totalExpense += entry.amount;
+      }
+    });
+  });
+
+  const balance = totalIncome - totalExpense;
 
   return { totalIncome, totalExpense, balance };
 };

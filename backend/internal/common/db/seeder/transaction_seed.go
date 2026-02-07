@@ -40,8 +40,6 @@ func SeedTransactions(db *gorm.DB) {
 		accountsByType[account.Type] = append(accountsByType[account.Type], account)
 	}
 
-	// テストデータ作成
-	transactions := []models.Transaction{}
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	// 各ユーザーの取引データを生成
@@ -50,55 +48,64 @@ func SeedTransactions(db *gorm.DB) {
 		endDate := time.Now()
 		startDate := endDate.AddDate(0, 0, -60)
 
-		// 各勘定科目タイプごとに複数の取引を作成
-		accountTypes := []models.AccountType{
-			models.AssetAccount,
-			models.LiabilityAccount,
-			models.EquityAccount,
-			models.RevenueAccount,
-			models.ExpenseAccount,
-		}
-
-		// 1日あたり1-3件のランダムな取引を生成（60日間）
+		// 1日あたり1件のランダムな取引を生成（60日間）
 		currentDate := startDate
 		for currentDate.Before(endDate) {
-			// 1日あたりの取引件数をランダムに決定（0-3件）
-			numTransactions := rng.Intn(4)
+			// ランダムに2つの勘定科目を選択（借方と貸方）
+			debitAccount := accounts[rng.Intn(len(accounts))]
+			creditAccount := accounts[rng.Intn(len(accounts))]
 
-			for i := 0; i < numTransactions; i++ {
-				// ランダムに勘定科目タイプを選択
-				accountType := accountTypes[rng.Intn(len(accountTypes))]
+			// 異なる勘定科目を保証
+			maxAttempts := 5
+			for debitAccount.ID == creditAccount.ID && maxAttempts > 0 {
+				creditAccount = accounts[rng.Intn(len(accounts))]
+				maxAttempts--
+			}
 
-				// 選択されたタイプの勘定科目を取得
-				typeAccounts := accountsByType[accountType]
-				if len(typeAccounts) == 0 {
-					continue
-				}
+			// 100円から300,000円までのランダムな金額
+			amount := 100 + rng.Intn(300000-100+1)
 
-				account := typeAccounts[rng.Intn(len(typeAccounts))]
+			description := fmt.Sprintf("%sから%sへ%d円の振替", debitAccount.Name, creditAccount.Name, amount)
 
-				// 100円から300,000円までのランダムな金額
-				amount := 100 + rng.Intn(300000-100+1)
+			// トランザクション作成
+			transaction := models.Transaction{
+				UserID:      user.ID,
+				Date:        currentDate,
+				Description: description,
+			}
 
-				transaction := models.Transaction{
-					UserID:            user.ID,
-					Date:              currentDate,
-					ChartOfAccountsID: account.ID,
+			if err := db.Create(&transaction).Error; err != nil {
+				log.Printf("failed to seed transaction: %v", err)
+				continue
+			}
+
+			// 仕訳エントリーを作成
+			journalEntries := []models.JournalEntry{
+				{
+					TransactionID:     transaction.ID,
+					ChartOfAccountsID: debitAccount.ID,
+					Type:              models.DebitEntry,
 					Amount:            amount,
-					Description:       fmt.Sprintf("%sの%s取引（%s）", user.Name, account.Type, account.Name),
+					Description:       "借方: " + debitAccount.Name,
+				},
+				{
+					TransactionID:     transaction.ID,
+					ChartOfAccountsID: creditAccount.ID,
+					Type:              models.CreditEntry,
+					Amount:            amount,
+					Description:       "貸方: " + creditAccount.Name,
+				},
+			}
+
+			for _, entry := range journalEntries {
+				if err := db.Create(&entry).Error; err != nil {
+					log.Printf("failed to seed journal entry: %v", err)
 				}
-				transactions = append(transactions, transaction)
 			}
 
 			currentDate = currentDate.AddDate(0, 0, 1)
 		}
 	}
 
-	for _, transaction := range transactions {
-		if err := db.Create(&transaction).Error; err != nil {
-			log.Printf("failed to seed transaction: %v", err)
-		}
-	}
-
-	log.Printf("seeded %d transactions", len(transactions))
+	log.Print("Transactions seeded successfully")
 }
