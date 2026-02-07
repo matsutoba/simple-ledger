@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { CountCard } from './CountCard';
 import { CategoryList } from './CategoryList';
 import { CategoryPieChart } from './CategoryPieChart';
-import { calculateBalance, isIncomeType } from '@/lib/utils/accountType';
+import { calculateBalance } from '@/lib/utils/accountType';
 import { useGetTransactions } from '@/hooks/useTransactions';
 
 type IncomeType = Extract<AccountType, 'asset' | 'equity' | 'revenue'>;
@@ -40,14 +40,27 @@ export const Analytics: React.FC = () => {
     };
 
     transactions.forEach((t) => {
-      if (isIncomeType(t.chartOfAccountsType)) {
-        incomeByCategory[t.chartOfAccountsType as IncomeType] =
-          (incomeByCategory[t.chartOfAccountsType as IncomeType] || 0) +
-          t.amount;
-      } else {
-        expenseByCategory[t.chartOfAccountsType as ExpenseType] =
-          (expenseByCategory[t.chartOfAccountsType as ExpenseType] || 0) +
-          t.amount;
+      // 複式簿記のjournalEntriesから勘定科目別に集計
+      if (t.journalEntries) {
+        t.journalEntries.forEach((entry) => {
+          const accountType = entry.chartOfAccounts.type;
+
+          // 収益、資産、純資産を収入に分類
+          if (
+            accountType === 'revenue' ||
+            accountType === 'asset' ||
+            accountType === 'equity'
+          ) {
+            incomeByCategory[accountType as IncomeType] =
+              (incomeByCategory[accountType as IncomeType] || 0) + entry.amount;
+          }
+          // 負債、費用を支出に分類
+          else if (accountType === 'expense' || accountType === 'liability') {
+            expenseByCategory[accountType as ExpenseType] =
+              (expenseByCategory[accountType as ExpenseType] || 0) +
+              entry.amount;
+          }
+        });
       }
     });
 
