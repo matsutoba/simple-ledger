@@ -16,7 +16,7 @@ func setupTestAuthService() *AuthService {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	_ = db.AutoMigrate(&models.User{})
 	userRepo := repository.NewUserRepository(db)
-	security.InitJWT("test-secret", 1, 1)
+	security.InitJWT("test-secret", 1.0, 1.0)
 	return NewAuthService(userRepo)
 }
 
@@ -123,19 +123,23 @@ func TestRefreshAccessToken_Success(t *testing.T) {
 	_, refreshToken, _ := service.Login("test@example.com", "password123")
 
 	// トークン更新
-	newAccessToken, err := service.RefreshAccessToken(refreshToken)
+	newAccessToken, newRefreshToken, err := service.RefreshAccessToken(refreshToken)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, newAccessToken)
+	assert.NotEmpty(t, newRefreshToken)
+	// 注: 実行が高速な場合、同じタイムスタンプで生成されることがあるため、
+	// 新しいトークンが返されていることだけを確認
 }
 
 func TestRefreshAccessToken_InvalidToken(t *testing.T) {
 	service := setupTestAuthService()
 
-	newAccessToken, err := service.RefreshAccessToken("invalid-token")
+	newAccessToken, newRefreshToken, err := service.RefreshAccessToken("invalid-token")
 
 	assert.Error(t, err)
 	assert.Empty(t, newAccessToken)
+	assert.Empty(t, newRefreshToken)
 }
 
 func TestRefreshAccessToken_InactiveUser(t *testing.T) {
@@ -160,8 +164,9 @@ func TestRefreshAccessToken_InactiveUser(t *testing.T) {
 	_, _ = service.userRepo.UpdateUser(user.ID, map[string]interface{}{"is_active": false})
 
 	// トークン更新を試みる
-	newAccessToken, err := service.RefreshAccessToken(refreshToken)
+	newAccessToken, newRefreshToken, err := service.RefreshAccessToken(refreshToken)
 
 	assert.Error(t, err)
 	assert.Empty(t, newAccessToken)
+	assert.Empty(t, newRefreshToken)
 }

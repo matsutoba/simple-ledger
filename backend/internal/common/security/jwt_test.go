@@ -8,7 +8,7 @@ import (
 )
 
 func TestGenerateToken(t *testing.T) {
-	InitJWT("test-secret", 1, 1)
+	InitJWT("test-secret", 1.0, 1.0)
 
 	token, err := GenerateToken(1, "test@example.com", "user", true)
 
@@ -17,7 +17,7 @@ func TestGenerateToken(t *testing.T) {
 }
 
 func TestVerifyToken_Success(t *testing.T) {
-	InitJWT("test-secret", 1, 1)
+	InitJWT("test-secret", 1.0, 1.0)
 
 	// トークンを生成
 	token, _ := GenerateToken(1, "test@example.com", "user", true)
@@ -33,7 +33,7 @@ func TestVerifyToken_Success(t *testing.T) {
 }
 
 func TestVerifyToken_InvalidToken(t *testing.T) {
-	InitJWT("test-secret", 1, 1)
+	InitJWT("test-secret", 1.0, 1.0)
 
 	claims, err := VerifyToken("invalid-token")
 
@@ -42,7 +42,7 @@ func TestVerifyToken_InvalidToken(t *testing.T) {
 }
 
 func TestVerifyToken_TamperedToken(t *testing.T) {
-	InitJWT("test-secret", 1, 1)
+	InitJWT("test-secret", 1.0, 1.0)
 
 	// トークンを生成
 	token, _ := GenerateToken(1, "test@example.com", "user", true)
@@ -57,7 +57,7 @@ func TestVerifyToken_TamperedToken(t *testing.T) {
 }
 
 func TestGenerateRefreshToken(t *testing.T) {
-	InitJWT("test-secret", 1, 1)
+	InitJWT("test-secret", 1.0, 1.0)
 
 	token, err := GenerateRefreshToken(1, "test@example.com", "user", true)
 
@@ -66,7 +66,7 @@ func TestGenerateRefreshToken(t *testing.T) {
 }
 
 func TestRefreshTokenExpiration(t *testing.T) {
-	InitJWT("test-secret", 1, 1)
+	InitJWT("test-secret", 1.0, 1.0)
 
 	// リフレッシュトークンを生成
 	token, _ := GenerateRefreshToken(1, "test@example.com", "user", true)
@@ -85,11 +85,11 @@ func TestRefreshTokenExpiration(t *testing.T) {
 
 func TestTokenWithDifferentSecrets(t *testing.T) {
 	// Secret1 でトークン生成
-	InitJWT("secret1", 1, 1)
+	InitJWT("secret1", 1.0, 1.0)
 	token, _ := GenerateToken(1, "test@example.com", "user", true)
 
-	// Secret2 で検証（失敗するはず）
-	InitJWT("secret2", 1, 1)
+	// Secret2 で検証(失敗するはず)
+	InitJWT("secret2", 1.0, 1.0)
 	claims, err := VerifyToken(token)
 
 	assert.Error(t, err)

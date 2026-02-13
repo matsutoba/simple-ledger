@@ -26,7 +26,7 @@ func setupTestAuthController() (*AuthController, *gorm.DB) {
 	userRepo := repository.NewUserRepository(db)
 	authService := service.NewAuthService(userRepo)
 	ctrl := NewAuthController(authService)
-	security.InitJWT("test-secret", 1, 1)
+	security.InitJWT("test-secret", 1.0, 1.0)
 	return ctrl, db
 }
 
@@ -175,6 +175,20 @@ func TestRefreshToken_Success(t *testing.T) {
 	var response map[string]interface{}
 	_ = json.Unmarshal(w.Body.Bytes(), &response)
 	assert.Equal(t, float64(security.GetTokenExpirationSeconds()), response["expiresIn"])
+
+	// 新しいトークンがクッキーに設定されているか確認
+	result := w.Result()
+	var accessTokenFound, refreshTokenFound bool
+	for _, cookie := range result.Cookies() {
+		if cookie.Name == "accessToken" && cookie.Value != "" {
+			accessTokenFound = true
+		}
+		if cookie.Name == "refreshToken" && cookie.Value != "" {
+			refreshTokenFound = true
+		}
+	}
+	assert.True(t, accessTokenFound, "accessToken cookie should be set")
+	assert.True(t, refreshTokenFound, "refreshToken cookie should be set")
 }
 
 func TestRefreshToken_InvalidToken(t *testing.T) {

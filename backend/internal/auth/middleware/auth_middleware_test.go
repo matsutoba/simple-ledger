@@ -13,7 +13,7 @@ import (
 
 func TestAuthMiddleware_ValidToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	security.InitJWT("test-secret", 1, 1)
+	security.InitJWT("test-secret", 1.0, 1.0)
 
 	// テストトークンを生成
 	token, _ := security.GenerateToken(1, "test@example.com", "user", true)
@@ -93,7 +93,7 @@ func TestAuthMiddleware_InvalidAuthHeaderFormat(t *testing.T) {
 
 func TestAuthMiddleware_InvalidToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	security.InitJWT("test-secret", 1, 1)
+	security.InitJWT("test-secret", 1.0, 1.0)
 
 	// 不正なトークンをクッキーに設定
 	httpReq := httptest.NewRequest("GET", "/protected", nil)
@@ -116,7 +116,7 @@ func TestAuthMiddleware_InvalidToken(t *testing.T) {
 
 func TestAuthMiddleware_ExpiredToken(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	security.InitJWT("test-secret", 1, 1)
+	security.InitJWT("test-secret", 1.0, 1.0)
 
 	// 有効期限が切れたトークンを生成することは難しいため、
 	// 異なるシークレットキーで署名されたトークンを使用

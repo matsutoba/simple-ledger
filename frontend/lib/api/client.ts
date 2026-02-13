@@ -91,6 +91,7 @@ class ApiClient {
   private async request<T>(
     path: string,
     options: RequestInit = {},
+    hasRetried: boolean = false,
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${path}`;
 
@@ -118,6 +119,13 @@ class ApiClient {
 
       // ステータスコードが401（認証失敗）の場合
       if (response.status === 401) {
+        if (!hasRetried && path !== '/api/auth/refresh') {
+          const refreshed = await this.refreshAccessToken();
+          if (refreshed) {
+            return this.request<T>(path, options, true);
+          }
+        }
+
         const errorData = await response.json().catch(() => ({}));
         return {
           error: errorData.error || '認証に失敗しました',
@@ -140,6 +148,34 @@ class ApiClient {
         error: message,
         statusCode: 0,
       };
+    }
+  }
+
+  private async refreshAccessToken(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      // リフレッシュ失敗時はログインページにリダイレクト
+      if (!response.ok) {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+        return false;
+      }
+
+      return true;
+    } catch {
+      // エラー時もログインページにリダイレクト
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      return false;
     }
   }
 

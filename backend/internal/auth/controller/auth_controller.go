@@ -72,17 +72,28 @@ func (c *AuthController) RefreshToken(ctx *gin.Context) {
 		return
 	}
 
-	accessToken, err := c.service.RefreshAccessToken(refreshToken)
+	accessToken, newRefreshToken, err := c.service.RefreshAccessToken(refreshToken)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 
-	// HttpOnly Cookie にトークンを設定
+	// HttpOnly Cookie にアクセストークンを設定
 	ctx.SetCookie(
 		"accessToken",
 		accessToken,
 		int(security.GetTokenExpirationSeconds()),
+		"/",
+		ctx.Request.Host,
+		false, // Secure: 開発環境では false（本番環境では true にすること）
+		true,  // HttpOnly: JavaScript からアクセス不可
+	)
+
+	// HttpOnly Cookie に新しいリフレッシュトークンを設定（スライディングウィンドウ）
+	ctx.SetCookie(
+		"refreshToken",
+		newRefreshToken,
+		int(security.GetRefreshTokenExpirationSeconds()),
 		"/",
 		ctx.Request.Host,
 		false, // Secure: 開発環境では false（本番環境では true にすること）
