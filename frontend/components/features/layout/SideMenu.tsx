@@ -10,6 +10,11 @@ const menuItems: { icon: IconName; label: string; href: string }[] = [
   { icon: 'home', label: 'ダッシュボード', href: '/' },
   { icon: 'dollar-sign', label: '取引', href: '/transactions' },
   { icon: 'bar-chart-3', label: 'レポート', href: '/analytics' },
+  {
+    icon: 'book-open',
+    label: '勘定科目マスタ',
+    href: '/chart-of-accounts-master',
+  },
 ];
 
 interface SideMenuProps {

@@ -7,6 +7,7 @@ import {
 import {
   getIncomeChartOfAccounts,
   getExpenseChartOfAccounts,
+  getChartOfAccountsByTypes,
   type ChartOfAccount,
 } from '@/lib/api/chartOfAccounts';
 
@@ -51,6 +52,35 @@ export function useSuspenseExpenseChartOfAccounts(): UseSuspenseQueryResult<
     queryKey: ['chartOfAccounts', 'expense'],
     queryFn: async () => {
       const response = await getExpenseChartOfAccounts();
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      return response.data?.accounts || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * すべての勘定科目を取得 (Suspense版)
+ * Suspenseで待機させたい場合、useQueryではなくこの関数を使用
+ */
+export function useAllChartOfAccounts(): UseSuspenseQueryResult<
+  ChartOfAccount[],
+  Error
+> {
+  return useSuspenseQuery({
+    queryKey: ['chartOfAccounts', 'all'],
+    queryFn: async () => {
+      const response = await getChartOfAccountsByTypes([
+        'asset',
+        'liability',
+        'equity',
+        'revenue',
+        'expense',
+      ]);
 
       if (response.error) {
         throw new Error(response.error);
