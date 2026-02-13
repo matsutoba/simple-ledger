@@ -138,10 +138,10 @@ Error return value of `db.AutoMigrate` is not checked (errcheck)
 バックエンドは `.env` ファイルで環境変数を管理：
 
 ```
-# JWT 設定
+# JWT 設定（小数値に対応：例：0.0167 = 約1分）
 JWT_SECRET=development-secret-key-change-in-production
 TOKEN_EXPIRATION_HOURS=1
-REFRESH_TOKEN_EXPIRATION_HOURS=1
+REFRESH_TOKEN_EXPIRATION_HOURS=24
 
 # アプリケーション
 APP_ENV=development
@@ -158,6 +158,7 @@ DB_PASSWORD=password
 - `APP_ENV=production` で本番環境
 - 開発環境では自動的にシードデータを投入
 - 環境変数は `config.GetEnv()`, `config.GetEnvAsInt()` で取得
+- **推奨設定**: リフレッシュトークンはアクセストークンより長い有効期限を設定（スライディングウィンドウ方式で自動延長される）
 
 ---
 
@@ -236,7 +237,7 @@ internal/auth/
 
 #### `jwt.go`:
 
-- `InitJWT(secret string, tokenExpirationHours int, refreshTokenExpirationHours int)` - 初期化（main.go で呼び出す）
+- `InitJWT(secret string, tokenExpirationHours float64, refreshTokenExpirationHours float64)` - 初期化（main.go で呼び出す）※float64 型で小数値に対応
 - `GenerateToken(userID uint, email string, role string, isActive bool)` - アクセストークン生成
 - `GenerateRefreshToken(userID uint, email string, role string, isActive bool)` - リフレッシュトークン生成
 - `VerifyToken(tokenString string) (*CustomClaims, error)` - トークン検証（署名検証 + 有効期限チェック）
@@ -256,13 +257,15 @@ internal/auth/
 ### Service 層パターン
 
 - `Login()`: メールアドレスとパスワードで認証、トークン生成
-- `RefreshAccessToken()`: リフレッシュトークンでアクセストークン更新
+- `RefreshAccessToken()`: リフレッシュトークンでアクセストークン更新 + 新しいリフレッシュトークン生成（スライディングウィンドウ方式）
+  - 戻り値: `(accessToken string, newRefreshToken string, error)`
+  - アクティブなユーザーのセッションは自動延長される
 - ユーザー有効性チェック（IsActive）を実装
 
 ### Controller 層パターン
 
 - POST `/api/auth/login` - HTTP 200、LoginResponse 返却（expiresIn のみ、トークンはクッキーに設定）
-- POST `/api/auth/refresh` - HTTP 200、新しい accessToken をクッキーに設定
+- POST `/api/auth/refresh` - HTTP 200、新しい accessToken と refreshToken をクッキーに設定（スライディングウィンドウ）
 - エラーは HTTP 401 (Unauthorized) で返す
 
 #### ログインエンドポイントの実装例
@@ -311,6 +314,52 @@ func (c *AuthController) Login(ctx *gin.Context) {
 }
 ```
 
+#### トークン更新エンドポイントの実装例（スライディングウィンドウ）
+
+```go
+func (c *AuthController) RefreshToken(ctx *gin.Context) {
+  // クッキーから refreshToken を取得
+  refreshToken, err := ctx.Cookie("refreshToken")
+  if err != nil {
+    ctx.JSON(http.StatusUnauthorized, gin.H{"error": "リフレッシュトークンが見つかりません"})
+    return
+  }
+
+  // 新しいトークンを生成（新しいリフレッシュトークンも返される）
+  accessToken, newRefreshToken, err := c.service.RefreshAccessToken(refreshToken)
+  if err != nil {
+    ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+    return
+  }
+
+  // 新しいアクセストークンを設定
+  ctx.SetCookie(
+    "accessToken",
+    accessToken,
+    int(security.GetTokenExpirationSeconds()),
+    "/",
+    ctx.Request.Host,
+    false,
+    true,
+  )
+
+  // 新しいリフレッシュトークンを設定（スライディングウィンドウで有効期限延長）
+  ctx.SetCookie(
+    "refreshToken",
+    newRefreshToken,
+    int(security.GetRefreshTokenExpirationSeconds()),
+    "/",
+    ctx.Request.Host,
+    false,
+    true,
+  )
+
+  ctx.JSON(http.StatusOK, gin.H{
+    "expiresIn": security.GetTokenExpirationSeconds(),
+  })
+}
+```
+
 ### Middleware パターン
 
 - クッキーからトークンを取得
@@ -352,6 +401,7 @@ func AuthMiddleware() gin.HandlerFunc {
 - **トークン送信**: ブラウザが自動的にクッキーをリクエストに含める
 - **セキュリティ**: XSS 攻撃に耐性がある
 - **スケーラビリティ**: ステートレス JWT なので複数サーバーに対応
+- **セッション延長**: リフレッシュ時に新しいリフレッシュトークンを発行（スライディングウィンドウ方式）で、アクティブユーザーのセッションを自動延長
 - **ログアウト**: クッキーを max-age=0 で削除（または新しい実装が必要）
 
 ---
@@ -372,7 +422,7 @@ func AuthMiddleware() gin.HandlerFunc {
 ### テスト高速化
 
 - SQLite インメモリ DB を使用して高速化
-- **テスト初期化**: `InitJWT("test-secret", 1, 1)` でテスト用 JWT を初期化
+- **テスト初期化**: `InitJWT("test-secret", 1.0, 1.0)` でテスト用 JWT を初期化（float64 型）
 
 ---
 
@@ -381,7 +431,6 @@ func AuthMiddleware() gin.HandlerFunc {
 ### バックエンド
 
 1. **エラーハンドリング（必須）**
-
    - すべての戻り値のエラーをチェック（golangci-lint の errcheck で検査）
    - エラーハンドリングの基本パターン：
 
@@ -408,7 +457,6 @@ func AuthMiddleware() gin.HandlerFunc {
    - テストコード内でも同じルールを適用
 
 2. **関数の戻り値**
-
    - 戻り値がある関数は必ずハンドリング
    - 複数の戻り値がある場合は全てをチェック（例：`*User, error`）
    - テストコードでも無視するなら `_, _ =` で明示
@@ -416,18 +464,15 @@ func AuthMiddleware() gin.HandlerFunc {
    - 例: `if err != nil { return err }` を忘れずに
 
 3. **命名規則**
-
    - エクスポート関数: PascalCase
    - プライベート関数: camelCase
    - 定数: UPPER_SNAKE_CASE
 
 4. **goimports 対応**
-
    - インポートは自動フォーマットで整理（`.air.toml` で実行）
    - 不要なインポートは記述しない
 
 5. **JSON レスポンス形式**
-
    - struct タグのキャメルケース必須（React フロントエンドとの互換性）
    - 例: `json:"createdAt"`, `json:"lastLoginAt"`, `json:"isActive"`
    - 隠す必要があるフィールドは `json:"-"` を使用
@@ -442,7 +487,9 @@ func AuthMiddleware() gin.HandlerFunc {
 2. DB 接続設定
 3. マイグレーション実行
 4. シードデータ投入（開発環境のみ）
-5. **JWT 初期化** (`security.InitJWT()` - 環境変数から有効期限を読み込み)
+5. **JWT 初期化** (`security.InitJWT()` - 環境変数から有効期限を読み込み）
+   - 例: `security.InitJWT(jwtSecret, 1.0, 24.0)` - アクセス：1時間、リフレッシュ：24時間
+   - float64 型で小数値（例：0.0167 = 約1分）にも対応
 6. ルート定義
 
 ---

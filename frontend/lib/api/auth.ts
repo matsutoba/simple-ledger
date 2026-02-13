@@ -44,18 +44,9 @@ export async function login(
 export async function refreshToken(): Promise<
   ApiResponse<{ accessToken: string }>
 > {
-  const refreshToken = localStorage.getItem('refreshToken');
-
-  if (!refreshToken) {
-    return {
-      error: 'リフレッシュトークンが見つかりません',
-      statusCode: 401,
-    };
-  }
-
-  return apiClient.post('/api/auth/refresh', {
-    refreshToken,
-  });
+  // リフレッシュトークンは HttpOnly Cookie に保存されるため
+  // リクエストを送るだけでサーバー側で参照される
+  return apiClient.post('/api/auth/refresh', {});
 }
 
 /**

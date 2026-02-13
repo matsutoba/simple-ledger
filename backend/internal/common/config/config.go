@@ -30,3 +30,13 @@ func GetEnvAsInt(key string, defaultValue int) int {
 	}
 	return defaultValue
 }
+
+// GetEnvAsFloat64 は環境変数をfloat64として取得（失敗時はデフォルト値）
+func GetEnvAsFloat64(key string, defaultValue float64) float64 {
+	if value, exists := os.LookupEnv(key); exists {
+		if v, err := strconv.ParseFloat(value, 64); err == nil {
+			return v
+		}
+	}
+	return defaultValue
+}

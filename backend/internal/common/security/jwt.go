@@ -14,17 +14,17 @@ var (
 )
 
 // InitJWT は JWT シークレットキーと有効期限を初期化
-func InitJWT(secret string, tokenExpirationHours int, refreshTokenExpirationHours int) {
+func InitJWT(secret string, tokenExpirationHours float64, refreshTokenExpirationHours float64) {
 	if secret == "" {
 		secret = "development-secret-key-change-in-production"
 	}
 	jwtSecret = []byte(secret)
 
 	if tokenExpirationHours > 0 {
-		tokenExpiration = time.Duration(tokenExpirationHours) * time.Hour
+		tokenExpiration = time.Duration(tokenExpirationHours * float64(time.Hour))
 	}
 	if refreshTokenExpirationHours > 0 {
-		refreshTokenExpiration = time.Duration(refreshTokenExpirationHours) * time.Hour
+		refreshTokenExpiration = time.Duration(refreshTokenExpirationHours * float64(time.Hour))
 	}
 }
 

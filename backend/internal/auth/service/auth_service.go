@@ -53,30 +53,37 @@ func (s *AuthService) Login(email string, password string) (accessToken string, 
 	return accessToken, refreshToken, nil
 }
 
-// RefreshAccessToken はアクセストークンを更新
-func (s *AuthService) RefreshAccessToken(refreshToken string) (string, error) {
+// RefreshAccessToken はアクセストークンとリフレッシュトークンを更新
+// スライディングウィンドウ方式で、アクティブユーザーのセッションを自動延長する
+func (s *AuthService) RefreshAccessToken(refreshToken string) (accessToken string, newRefreshToken string, err error) {
 	// リフレッシュトークンを検証
 	claims, err := security.VerifyToken(refreshToken)
 	if err != nil {
-		return "", fmt.Errorf("invalid refresh token")
+		return "", "", fmt.Errorf("invalid refresh token")
 	}
 
 	// ユーザーを取得（最新情報を確認）
 	user, err := s.userRepo.GetUserByID(claims.UserID)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// ユーザーが有効か確認
 	if !user.IsActive {
-		return "", fmt.Errorf("user account is inactive")
+		return "", "", fmt.Errorf("user account is inactive")
 	}
 
 	// 新しいアクセストークンを生成
-	accessToken, err := security.GenerateToken(user.ID, user.Email, user.Role, user.IsActive)
+	accessToken, err = security.GenerateToken(user.ID, user.Email, user.Role, user.IsActive)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return accessToken, nil
+	// 新しいリフレッシュトークンを生成（スライディングウィンドウ）
+	newRefreshToken, err = security.GenerateRefreshToken(user.ID, user.Email, user.Role, user.IsActive)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, newRefreshToken, nil
 }

@@ -75,10 +75,10 @@ func main() {
 	 */
 	log.Print("Initializing JWT...")
 	jwtSecret := config.GetEnv("JWT_SECRET", "")
-	tokenExpirationHours := config.GetEnvAsInt("TOKEN_EXPIRATION_HOURS", 1)
-	refreshTokenExpirationHours := config.GetEnvAsInt("REFRESH_TOKEN_EXPIRATION_HOURS", 1)
+	tokenExpirationHours := config.GetEnvAsFloat64("TOKEN_EXPIRATION_HOURS", 1)
+	refreshTokenExpirationHours := config.GetEnvAsFloat64("REFRESH_TOKEN_EXPIRATION_HOURS", 1)
 	security.InitJWT(jwtSecret, tokenExpirationHours, refreshTokenExpirationHours)
-	log.Printf("JWT initialized (token: %d hours, refresh: %d hours)", tokenExpirationHours, refreshTokenExpirationHours)
+	log.Printf("JWT initialized (token: %.2f hours, refresh: %.2f hours)", tokenExpirationHours, refreshTokenExpirationHours)
 
 	/*
 	 * ルート定義
